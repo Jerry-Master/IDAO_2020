@@ -1,0 +1,53 @@
+---
+title: "IDAO"
+output: html_notebook
+---
+
+Llibraries
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+```
+Dades
+```{r}
+dd <- read_csv("train.csv")
+dd$dist <- sqrt(dd$x^2 + dd$y^2 + dd$z^2)
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$epoch <- dd$epoch - min(dd$epoch)
+head(dd)
+```
+Models i prediccions
+```{r}
+for (i in 0:50){
+ ddi <- filter(dd, sat_id==i)
+  
+ lmX <- lm(x ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+ lmY <- lm(y ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+ lmZ <- lm(z ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+
+ lmVx <- lm(Vx ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+ lmVy <- lm(Vy ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+ lmVz <- lm(Vz ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+  
+ if (i == 0) {
+  ans <- data.frame(id = ddi$id, x=predict(lmX), y=predict(lmY), z=predict(lmZ), 
+             Vx=predict(lmVx), Vy=predict(lmVy), Vz=predict(lmVz))
+ } else{
+  ans <- rbind(ans, data.frame(id = ddi$id, x=predict(lmX), y=predict(lmY), z=predict(lmZ), 
+             Vx=predict(lmVx), Vy=predict(lmVy), Vz=predict(lmVz)))
+ }
+}
+```
+Passar a csv
+```{r}
+write.csv(ans, "respuesta.csv", quote = F)
+```
+
+
+
+
+
