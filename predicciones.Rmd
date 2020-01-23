@@ -18,33 +18,44 @@ dd <- read_csv("train.csv")
 dd$dist <- sqrt(dd$x^2 + dd$y^2 + dd$z^2)
 dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
 dd$epoch <- dd$epoch - min(dd$epoch)
-head(dd)
+
+test <- read_csv("test.csv")
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+test$epoch <- test$epoch - min(test$epoch)
+head(test)
 ```
 Models i prediccions
 ```{r}
-for (i in 0:50){
+for (i in unique(test$sat_id)){
  ddi <- filter(dd, sat_id==i)
+ testi <- filter(test, sat_id==i)
   
- lmX <- lm(x ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
- lmY <- lm(y ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
- lmZ <- lm(z ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+ lmX <- lm(x ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmY <- lm(y ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmZ <- lm(z ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
 
- lmVx <- lm(Vx ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
- lmVy <- lm(Vy ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
- lmVz <- lm(Vz ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, ddi)
+ lmVx <- lm(Vx ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmVy <- lm(Vy ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmVz <- lm(Vz ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
   
- if (i == 0) {
-  ans <- data.frame(id = ddi$id, x=predict(lmX), y=predict(lmY), z=predict(lmZ), 
-             Vx=predict(lmVx), Vy=predict(lmVy), Vz=predict(lmVz))
+ if (i == 1) {
+  ans <- data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
  } else{
-  ans <- rbind(ans, data.frame(id = ddi$id, x=predict(lmX), y=predict(lmY), z=predict(lmZ), 
-             Vx=predict(lmVx), Vy=predict(lmVy), Vz=predict(lmVz)))
+  ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
  }
 }
 ```
 Passar a csv
 ```{r}
-write.csv(ans, "respuesta.csv", quote = F)
+ans$id <- format(ans$id, scientific = F)
+ans$x <- format(ans$x, scientific = F)
+ans$y <- format(ans$y, scientific = F)
+ans$z <- format(ans$z, scientific = F)
+ans$Vx <- format(ans$Vx, scientific = F)
+ans$Vy <- format(ans$Vy, scientific = F)
+ans$Vz <- format(ans$Vz, scientific = F)
+
+write.csv(ans, "submission.csv", quote = F, row.names = F)
 ```
 
 
