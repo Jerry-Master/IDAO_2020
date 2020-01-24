@@ -1,2 +1,2 @@
-export PATH=/usr/conda/bin:$PATH
-python main.py
+g++ -std=c++11 main.cpp -lpthread -o main
+./main $TP $TC
