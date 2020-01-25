@@ -76,3 +76,61 @@ write.csv(ans, "submission.csv", quote = F, row.names = F)
 head(ans)
 head(dd)
 ```
+
+
+```{r}
+ddi$ts2 <- ddi$epoch*sin(2*pi/t*ddi$epoch)
+ddi$ts4 <- ddi$epoch*sin(4*pi/t*ddi$epoch)
+ddi$ts6 <- ddi$epoch*sin(6*pi/t*ddi$epoch)
+ddi$ts8 <- ddi$epoch*sin(8*pi/t*ddi$epoch)
+ddi$ts10 <- ddi$epoch*sin(10*pi/t*ddi$epoch)
+
+ddi$tc2 <- ddi$epoch*cos(2*pi/t*ddi$epoch)
+ddi$tc4 <- ddi$epoch*cos(4*pi/t*ddi$epoch)
+ddi$tc6 <- ddi$epoch*cos(6*pi/t*ddi$epoch)
+ddi$tc8 <- ddi$epoch*cos(8*pi/t*ddi$epoch)
+ddi$tc10 <- ddi$epoch*cos(10*pi/t*ddi$epoch)
+
+ lmX <- lm(x ~ epoch+sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)+ts2+tc2+ts4+tc4+ts6+tc6+ts8+tc8+ts10+tc10, ddi)
+
+Anova(lmX)
+```
+```{r}
+for (i in unique(test$sat_id)){
+  print(i)
+  ddi <- filter(dd, sat_id==i)
+  testi <- filter(test, sat_id==i)
+  t <- (ddi$epoch[25]-ddi$epoch[1])
+  
+  ddi$ts2 <- ddi$epoch*sin(2*pi/t*ddi$epoch)
+  ddi$ts4 <- ddi$epoch*sin(4*pi/t*ddi$epoch)
+  ddi$ts6 <- ddi$epoch*sin(6*pi/t*ddi$epoch)
+  ddi$ts8 <- ddi$epoch*sin(8*pi/t*ddi$epoch)
+  ddi$ts10 <- ddi$epoch*sin(10*pi/t*ddi$epoch)
+  
+  ddi$tc2 <- ddi$epoch*cos(2*pi/t*ddi$epoch)
+  ddi$tc4 <- ddi$epoch*cos(4*pi/t*ddi$epoch)
+  ddi$tc6 <- ddi$epoch*cos(6*pi/t*ddi$epoch)
+  ddi$tc8 <- ddi$epoch*cos(8*pi/t*ddi$epoch)
+  ddi$tc10 <- ddi$epoch*cos(10*pi/t*ddi$epoch)
+ 
+ lmX <- lm(x ~ epoch+sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)+ts2+tc2+ts4+tc4+ts6+tc6+ts8+tc8+ts10+tc10, ddi)
+ 
+ lmY <- lm(y ~ epoch+sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)+ts2+tc2+ts4+tc4+ts6+tc6+ts8+tc8+ts10+tc10, ddi)
+ 
+ lmZ <- lm(z ~ epoch+sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)+ts2+tc2+ts4+tc4+ts6+tc6+ts8+tc8+ts10+tc10, ddi)
+
+ lmVx <- lm(Vx ~ epoch+sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)+ts2+tc2+ts4+tc4+ts6+tc6+ts8+tc8+ts10+tc10, ddi)
+ 
+ lmVy <- lm(Vy ~ epoch+sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)+ts2+tc2+ts4+tc4+ts6+tc6+ts8+tc8+ts10+tc10, ddi)
+ 
+ lmVz <- lm(Vz ~ epoch+sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)+ts2+tc2+ts4+tc4+ts6+tc6+ts8+tc8+ts10+tc10, ddi)
+  
+ if (i == 1) {
+  ans <- data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+ } else{
+  ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+ }
+}
+```
+
