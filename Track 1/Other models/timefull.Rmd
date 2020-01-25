@@ -16,15 +16,16 @@ library(dplyr)
 
 Dades
 ```{r}
+setwd("../../data")
 dd <- read_csv("train.csv")
 
 test <- read_csv("test.csv") # Canviar a test si es vol generar la submission (també s'ha de canviar el if del bucle)
 
 test$epoch <- as.numeric(as.POSIXct(test$epoch))
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
 test$epoch <- test$epoch - min(dd$epoch)
 head(test)
 
-dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
 dd$epoch <- dd$epoch - min(dd$epoch)
 ```
 
