@@ -19,8 +19,8 @@ vvd data, M(600, vd(6*num_coeff)); //coefs
 vd T(600); //periods
 
 void init(){
-    fstream fin; 
-    fin.open("sin_betas.txt", ios::in); 
+    fstream fin;
+    fin.open("sin_betas.txt", ios::in);
 
     fin >> initial_time;
     initial_time -= 86400;
@@ -33,7 +33,7 @@ void init(){
                     char c;
                     fin >> c;
                 }
-                
+
                 fin >> M[i][j*num_coeff + k];
             }
         }
@@ -44,9 +44,9 @@ void init(){
     time1970.tm_year = 1970; time1970.tm_mon = 0; time1970.tm_mday = 1;
 }
 
-double time(string info){  
+double time(string info){
     struct tm timenew = {0};
-    
+
     stringstream ss(info);
 
     vector <string> V(6);
@@ -65,10 +65,10 @@ double time(string info){
 }
 
 void read_train(){
-    fstream fin; 
-  
-    fin.open("train.csv", ios::in); 
-    vd query; 
+    fstream fin;
+
+    fin.open("train.csv", ios::in);
+    vd query;
     string s, info;
 
     for (int i = 0; i < 15; ++i){
@@ -77,7 +77,7 @@ void read_train(){
     }
 
     int cnt = 0;
-    while (cnt++ < 2 and getline(fin, info, ',')){ 
+    while (cnt++ < 2 and getline(fin, info, ',')){
         query = {stod(info)};
 
         for (int i = 0; i < 14; ++i){
@@ -86,21 +86,21 @@ void read_train(){
 
             if (i >= 2) continue;
 
-            if (i == 1) query.push_back(stod(info)); 
+            if (i == 1) query.push_back(stod(info));
             else query.push_back(time(info));
-        } 
+        }
 
         data.push_back(query);
     }
 
     fin.close();
-} 
+}
 
 void read_test(){
-    fstream fin; 
-  
-    fin.open("test.csv", ios::in); 
-    vd query; 
+    fstream fin;
+
+    fin.open("test.csv", ios::in);
+    vd query;
     string s, info;
 
     for (int i = 0; i < 9; ++i){
@@ -108,7 +108,7 @@ void read_test(){
         else getline(fin, info, ',');
     }
 
-    while (getline(fin, info, ',')){ 
+    while (getline(fin, info, ',')){
         query = {stod(info)};
         for (int i = 0; i < 8; ++i){
             if (i == 7) getline(fin, info);
@@ -116,32 +116,32 @@ void read_test(){
 
             if (i >= 2) continue;
 
-            if (i == 0) query.push_back(stod(info)); 
+            if (i == 0) query.push_back(stod(info));
             else query.push_back(time(info));
-        } 
+        }
 
         data.push_back(query);
     }
 
     fin.close();
-} 
+}
 
 double evaluate(double x, int i, int k){
     double ans = M[i][k];
     for (int j = 2; j < num_coeff; j += 2) ans += M[i][k+j-1] * sin(pi*x*j/T[i]) + M[i][k+j] * cos(pi*x*j/T[i]);
-    
+
     return ans;
 }
 
 void solve() {
-    fstream fout; 
+    fstream fout;
     fout.setf(ios::fixed);
     fout.precision(15);
 
-    fout.open("submission.csv", ios::out); 
+    fout.open("submission.csv", ios::out);
 
     fout << "id,x,y,z,Vx,Vy,Vz\n";
-    
+
     int index = 0;
 
     for (int i = 0; i < data.size(); ++i){
@@ -155,7 +155,7 @@ void solve() {
                 index = int(0.5 + data[i][j]);
                 continue;
             }
-            
+
             fout << evaluate(data[i][2], index, (j-2)*num_coeff);
             if (j == 7) fout << '\n';
             else fout << ',';
