@@ -16,6 +16,7 @@ library(dplyr)
 
 Dades
 ```{r}
+setwd("../../data")
 dd <- read_csv("train.csv")
 dd$dist <- sqrt(dd$x^2 + dd$y^2 + dd$z^2)
 dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
@@ -67,7 +68,9 @@ ans$z <- format(ans$z, scientific = F)
 ans$Vx <- format(ans$Vx, scientific = F)
 ans$Vy <- format(ans$Vy, scientific = F)
 ans$Vz <- format(ans$Vz, scientific = F)
+```
 
+```{r}
 write.csv(ans, "submission.csv", quote = F, row.names = F)
 ```
 
