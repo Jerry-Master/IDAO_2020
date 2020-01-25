@@ -1,0 +1,73 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+Llibraries
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+```
+
+Dades
+```{r}
+dd <- read_csv("train.csv")
+dd$dist <- sqrt(dd$x^2 + dd$y^2 + dd$z^2)
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$epoch <- dd$epoch - min(dd$epoch)
+
+test <- read_csv("test.csv") # Canviar a test si es vol generar la submission (també s'ha de canviar el if del bucle)
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+test$epoch <- test$epoch - min(test$epoch)
+head(test)
+```
+
+Models i prediccions
+```{r}
+for (i in unique(test$sat_id)){
+  print(i)
+ ddi <- filter(dd, sat_id==i)
+ testi <- filter(test, sat_id==i)
+ t <- (ddi$epoch[25]-ddi$epoch[1])
+ 
+ 
+ lmX <- lm(x ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmY <- lm(y ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmZ <- lm(z ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+
+ lmVx <- lm(Vx ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmVy <- lm(Vy ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmVz <- lm(Vz ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+  
+ if (i == 1) {
+  ans <- data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+ } else{
+  ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+ }
+}
+```
+
+Passar a csv
+```{r}
+ans$id <- format(ans$id, scientific = F)
+ans$x <- format(ans$x, scientific = F)
+ans$y <- format(ans$y, scientific = F)
+ans$z <- format(ans$z, scientific = F)
+ans$Vx <- format(ans$Vx, scientific = F)
+ans$Vy <- format(ans$Vy, scientific = F)
+ans$Vz <- format(ans$Vz, scientific = F)
+
+write.csv(ans, "submission.csv", quote = F, row.names = F)
+```
+
