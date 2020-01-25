@@ -12,8 +12,8 @@ TEST
 Por defecto: 66.24
 Modelo temporal: 80.72
 Modelo temporal con epoch: ?
-Modelo temporal full epoch: ?
+Modelo temporal full epoch: 88.69
 Modelo lineal: 80.35
-Modelo mixto: ?
+Modelo mixto: 86.98
 Modelo mixto con epoch: ?
-Modelo mixto full epoch: ?
+Modelo mixto full epoch: 88.72
