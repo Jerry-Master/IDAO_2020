@@ -1,0 +1,19 @@
+TRAINING
+Por defecto: 81.275
+Modelo temporal: 85.581
+Modelo temporal con epoch: 86.654
+Modelo temporal full epoch: 94.578
+Modelo lineal: 90.465
+Modelo mixto: 94.104
+Modelo mixto con epoch: 94.624
+Modelo mixto full epoch: 96.250
+
+TEST
+Por defecto: 66.24
+Modelo temporal: 80.72
+Modelo temporal con epoch: ?
+Modelo temporal full epoch: ?
+Modelo lineal: 80.35
+Modelo mixto: ?
+Modelo mixto con epoch: ?
+Modelo mixto full epoch: ?
