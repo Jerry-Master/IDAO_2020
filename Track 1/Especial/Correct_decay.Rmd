@@ -45,6 +45,8 @@ minims <- function(v) {
 mins <- minims(raro$x)
 plot(raro$epoch[mins], raro$x[mins])
 ```
+# Aqui esta lo que buscas (se llama recta)
+############################################################################################
 
 ## Corrected data
 ```{r}
@@ -53,6 +55,10 @@ recta <- lm(x ~ epoch, data = mindd)
 
 plot(raro$epoch, raro$x - predict(recta, newdata=raro), type="l")
 ```
+# IGNORA LO QUE SIQUE
+############################################################################################
+
+
 ## Reference model
 ```{r}
 TT <- read_csv("../../data/periods.csv")
@@ -75,20 +81,36 @@ lines(raro$epoch, predict(model(raro)))
 ```
 ## Model correcting decay
 ```{r}
+model2 <- function(data, t1) {
+  
+    mod <- lm(x ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, data)
+    
+  print(summary(mod)$adj.r.squared)
+  mod
+}
+```
+
+```{r}
 test <- raro
 desv <- predict(recta, raro)
 test$x <- test$x - desv
 
-lmX <- model(test)
+t1 <- 35368.150045601156
+t1 <- unlist(TT[249+1,1])
+lmX <- model2(test, t1)
 
-plot(raro$epoch, raro$x, type="l", col="blue")
-lines(raro$epoch, predict(lmX)+desv)
+plot(raro$epoch, raro$x-desv, type="l", col="blue")
+lines(raro$epoch, predict(lmX))
 ```
 
 
+```{r}
+plot(test$epoch, test$x)
+```
 
-
-
+```{r}
+write.csv(test$x, file="pr.csv")
+```
 
 
 
