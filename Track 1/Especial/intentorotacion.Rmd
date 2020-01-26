@@ -1,0 +1,112 @@
+---
+title: "Correct_decay"
+output: html_document
+---
+
+## Llibraries
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+```
+## Dades
+```{r}
+
+dd <- read_csv("../../data/train.csv")
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$epoch <- dd$epoch - min(dd$epoch)
+```
+
+## Visualization
+```{r}
+raro <- dd %>% filter(sat_id == 249)
+plot(raro$epoch, raro$x, type="l")
+```
+## Minims
+Calcula los mínimos locales de un vector.
+Return: indices de los mínimos
+```{r}
+minims <- function(v) {
+  ans <- c()
+  for (i in 2:(length(v)-1)) {
+    if (v[i] < v[i+1] && v[i] < v[i-1]) {
+      ans <- c(ans, i)
+    }
+  }
+  ans
+}
+```
+
+### Visualization of minims
+```{r}
+mins <- minims(raro$x)
+plot(raro$epoch[mins], raro$x[mins])
+
+summary(recta)$coefficients
+```
+# Aqui esta lo que buscas (se llama recta)
+
+
+
+## Corrected data
+```{r}
+mindd <- raro[mins,]
+recta <- lm(x ~ epoch, data = mindd)
+
+plot(raro$epoch[], raro$x - predict(recta, newdata=raro), type="l")
+```
+# IGNORA LO QUE SIQUE
+############################################################################################
+
+```{r}
+m <- 1.622268e-03
+alfa <- atan(m)
+
+head(mindd)
+
+es <- unlist(mindd[1,"epoch"])
+xs <- unlist(mindd[1,"x"])
+xs0 <- unlist(mindd[1,"x_sim"])
+
+
+dd2 <- dd
+dd2$x <- dd2$x - xs
+dd2$x_sim <- dd2$x_sim - xs0
+
+dd2$newx <- dd2$x*cos(alfa) + dd2$epoch*sin(alfa)  + xs
+dd2$newx0 <- dd2$x_sim*cos(alfa) + dd2$epoch*sin(alfa)  + xs0
+dd2$newe <- dd2$epoch*cos(alfa) - dd2$x*sin(alfa) + es
+
+dd2$x <- dd2$newx
+dd2$x_sim <- dd2$newx0
+dd2$epoch <- dd2$newe
+
+plot(dd2$newe[0:100], dd2$newx[0:100])
+```
+
+## Reference model
+```{r}
+TT <- read_csv("../../data/periods.csv")
+
+
+  t1 <- unlist(TT[249+1,1])
+  t2 <- unlist(TT[249+1,2])
+  t3 <- unlist(TT[249+1,3])
+  t4 <- unlist(TT[249+1,4])
+  t5 <- unlist(TT[249+1,5])
+  t6 <- unlist(TT[249+1,6])
+    
+  lmX <- lm(x ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, dd2)
+    
+  a = 0200
+  b = 1500
+  
+  plot(dd2$epoch[a:b], dd2$x[a:b])
+  lines(dd2$epoch[a:b], predict(lmX, dd2)[a:b], col = "green")
+
+  summary(lmX)
+```
+
