@@ -1,0 +1,104 @@
+---
+title: "Correct_decay"
+output: html_document
+---
+
+## Llibraries
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+```
+## Dades
+```{r}
+setwd("../../data")
+dd <- read_csv("train.csv")
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$epoch <- dd$epoch - min(dd$epoch)
+```
+
+## Visualization
+```{r}
+raro <- dd %>% filter(sat_id == 249)
+plot(raro$epoch, raro$x, type="l")
+```
+## Minims
+Calcula los mínimos locales de un vector.
+Return: indices de los mínimos
+```{r}
+minims <- function(v) {
+  ans <- c()
+  for (i in 2:(length(v)-1)) {
+    if (v[i] < v[i+1] && v[i] < v[i-1]) {
+      ans <- c(ans, i)
+    }
+  }
+  ans
+}
+```
+
+### Visualization of minims
+```{r}
+mins <- minims(raro$x)
+plot(raro$epoch[mins], raro$x[mins])
+```
+
+## Corrected data
+```{r}
+mindd <- raro[mins,]
+recta <- lm(x ~ epoch, data = mindd)
+
+plot(raro$epoch, raro$x - predict(recta, newdata=raro), type="l")
+```
+## Reference model
+```{r}
+TT <- read_csv("../../data/periods.csv")
+
+model <- function(data) {
+  t1 <- unlist(TT[249+1,1])
+  t2 <- unlist(TT[249+1,2])
+  t3 <- unlist(TT[249+1,3])
+  t4 <- unlist(TT[249+1,4])
+  t5 <- unlist(TT[249+1,5])
+  t6 <- unlist(TT[249+1,6])
+    
+  lmX <- lm(x ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, data)
+}
+```
+
+```{r}
+plot(raro$epoch, raro$x, type="l", col="blue")
+lines(raro$epoch, predict(model(raro)))
+```
+## Model correcting decay
+```{r}
+test <- raro
+desv <- predict(recta, raro)
+test$x <- test$x - desv
+
+lmX <- model(test)
+
+plot(raro$epoch, raro$x, type="l", col="blue")
+lines(raro$epoch, predict(lmX)+desv)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
