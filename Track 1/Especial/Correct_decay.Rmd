@@ -195,6 +195,27 @@ ans$Vz <- format(ans$Vz, scientific = F)
 write.csv(ans, "corrected2.csv", quote = F, row.names = F)
 ```
 ############################################################################################
+## Poner en formato exportable
+```{r}
+corr2 <- read.csv("corrected2.csv")
+
+corr2$x_sim <- corr2$x
+corr2$y_sim <- corr2$y
+corr2$z_sim <- corr2$z
+corr2$Vx_sim <- corr2$Vx
+corr2$Vy_sim <- corr2$Vy
+corr2$Vz_sim <- corr2$Vz
+
+corr2$x <- dd$x
+corr2$y <- dd$y
+corr2$z <- dd$z
+corr2$Vx <- dd$Vx
+corr2$Vy <- dd$Vy
+corr2$Vz <- dd$Vz
+
+write.csv(corr2, file="corrected3.csv", quote=F, row.names=F)
+```
+############################################################################################
 ## Reference model
 ```{r}
 TT <- read_csv("../../data/periods.csv")
