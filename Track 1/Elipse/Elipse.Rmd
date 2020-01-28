@@ -132,6 +132,94 @@ plot(dd$x, dd$y, type="l")
 lines(dd$x_sim, dd$y_sim, col ="blue")
 lines(predict(cambioX), predict(cambioY), col="red")
 ```
+Estimar centros
+```{r}
+dist <- function(P, recta) {
+  a <- recta$coefficients[2]
+  b <- recta$coefficients[1]
+  
+  abs(a * P[1] - P[2] + b) / sqrt(a^2+1)
+}
+dist_P <- function(P, Q) {
+  A <- c(P[1]-Q[1], P[2]-Q[2])
+  sqrt(A[1]^2 + A[2]^2)
+}
+centro <- function(traj) {
+  #plot(traj$x, traj$y)
+  eje <- lm(y ~ x, data = traj)
+  #lines(traj$x, predict(eje))
+  
+  for (i in 1:length(traj$x)){
+    if (i == 1){
+      m <- dist(c(traj$x[1], traj$y[1]), eje)
+      i_min <- 1
+    } else {
+      new_d <- dist(c(traj$x[i], traj$y[i]), eje)
+      if (new_d < m) {
+        m <- new_d
+        i_min <- i
+      }
+    }
+  }
+  mins <- c()
+  for (i in 1:length(traj$x)){
+    if (dist(c(traj$x[i], traj$y[i]), eje) < m+8000) {
+      mins <- c(mins, i)
+    }
+  }
+  
+  mins_izq <- c()
+  mins_der <- c()
+  for (i in 1:length(mins)){
+    if (dist_P(c(traj$x[mins[i]], traj$y[mins[i]]), c(traj$x[i_min], traj$y[i_min])) < 15000) {
+      mins_izq <- c(mins_izq, mins[i])
+    } else {
+      mins_der <- c(mins_der, mins[i])
+    }
+  }
+  
+  min_izqX <- mean(traj[mins_izq,]$x)
+  min_derX <- mean(traj[mins_der,]$x)
+  min_izqY <- mean(traj[mins_izq,]$y)
+  min_derY <- mean(traj[mins_der,]$y)
+  
+  c((min_izqX+min_derX)/2, (min_izqY+min_derY)/2)
+}
+```
+
+```{r}
+k <- 0
+a <- 1 + k*24
+b <- 24 + k*24
+
+c1 <- centro(pr_train[a:b,])
+  
+plot(pr_train$x[a:b], pr_train$y[a:b])
+points(c1[1], c1[2])
+
+centros <- data.frame(x=c1[1], y = c1[2])
+while (b <= length(pr_train$x)) {
+  c1 <- centro(pr_train[a:b,])
+  
+  centros <- rbind(centros, data.frame(x=c1[1], y = c1[2]))
+  
+  k <- k+1
+  a <- 1 + k*24
+  b <- 24 + k*24
+}
+```
+```{r}
+k <- 76
+a <- 1 + k*24
+b <- 24 + k*24
+
+plot(pr_train$x[a:b], pr_train$y[a:b])
+points(centros$x[k+1], centros$y[k+1])
+```
+```{r}
+plot(pr_train$x, pr_train$y)
+lines(centros$x[1:76], centros$y[1:76], col="blue")
+```
 
 Predecir
 ```{r}
