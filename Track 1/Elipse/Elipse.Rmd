@@ -57,15 +57,33 @@ mod <- function(v){
 }
 
 vect_prod <- function(v1, v2){
-  c(v1[2]*v2[3]-v1[3]*v2[2], v1[3]*v2[1]-v1[1]*v3[3], v1[1]*v2[2]-v1[2]*v2[1])
+  c(v1[2]*v2[3]-v1[3]*v2[2], v1[3]*v2[1]-v1[1]*v2[3], v1[1]*v2[2]-v1[2]*v2[1])
 }
 
-ang_mom <- function(r, v) {
-  abs(vect_prod(r, v))
+ang_vel <- function(dat) {
+  ans <- c()
+  for (i in 1:length(dat$epoch)){
+    r <- c(dat$x[i], dat$y[i], 0)
+    v <- c(dat$Vx[i], dat$Vy[i], 0)
+    ans <- c(ans, mod(vect_prod(r, v)) / (mod(r)^2))
+  }
+  ans
 }
+
+a <- 1+10*24
+b <- a+23
+
+pr_train$w <- ang_vel(pr_train)*pr_train$epoch
+plot(pr_train$epoch, ang_vel(pr_train), type="l")
+
+lmX <- lm(x ~ sin(w)+cos(w), data = pr_train[a:b,])
+lmY <- lm(y ~ sin(w)+cos(w), data = pr_train[a:b,])
+  
+plot(predict(lmX), predict(lmY), col="blue")
+points(pr_train$x[a:b], pr_train$y[a:b])
 ```
 ```{r}
-n_elipses <- function(dat, a, b, n) {
+n_elipses <- function(dat, a, b, n, pred=T, test) {
   delta <- 4
   bi <- a-1
   for (i in 1:n) {
@@ -80,35 +98,39 @@ n_elipses <- function(dat, a, b, n) {
       lmX <- lm(x ~ sin(2*pi*epoch/tx)+cos(2*pi*epoch/tx), data = dat[ai:bi,])
       lmY <- lm(y ~ sin(2*pi*epoch/ty)+cos(2*pi*epoch/ty), data = dat[ai:bi,])
       
+      coefX <- lmX$coefficients
+      coefY <- lmY$coefficients
       if (i == 1) {
-        ans <- data.frame(x=predict(lmX), y=predict(lmY))
+        ans <- data.frame(x=predict(lmX, test[ai:bi,]), y=predict(lmY, test[ai:bi,]))
+        coefs <- data.frame(ax=coefX[1], ax=coefX[1], bx=coefX[2], cx=coefX[3], by=coefY[2], cy=coefY[3])
       } else {
-        ans <- rbind(ans, data.frame(x=predict(lmX), y=predict(lmY)))
+        ans <- rbind(ans, data.frame(x=predict(lmX, test[ai:bi,]), y=predict(lmY, test[ai:bi,])))
+        coefs <- rbind(coefs, data.frame(ax=coefX[1], ax=coefX[1], bx=coefX[2], cx=coefX[3], by=coefY[2], cy=coefY[3]))
       }
   }
-  ans
+  if (pred) {ans}
+  else {coefs} 
 }
 
-a <- 1+22*24
-b <- a+24
+a <- 1+0*24
+b <- a+23+0*24
 
-#lines(pr_train$x_sim[a:b], pr_train$y_sim[a:b])
-pred <- n_elipses(pr_train, a, b, as.integer((b-a)/4))
+pred <- n_elipses(pr_train, a, b, as.integer((b-a+1)/4), test=pr_train)
 plot(pr_train$x[a:b], pr_train$y[a:b])
 points(pred$x, pred$y, col="blue")
 ```
 ```{r}
 dd <- pr_train
-dd$x_sim <- pred[c(rep(seq_len(nrow(pred)-1), 76),1:12), ]$x
-dd$y_sim <- pred[c(rep(seq_len(nrow(pred)-1), 76),1:12), ]$y
+dd$x_sim <- pred[c(rep(seq_len(nrow(pred)), 76),1:12), ]$x
+dd$y_sim <- pred[c(rep(seq_len(nrow(pred)), 76),1:12), ]$y
 dd$id <- (as.double(dd$id)-469143)/24
 
-cambioX <- lm(x ~ id * x_sim * y_sim , data = dd)
-cambioY <- lm(y ~ id * x_sim * y_sim , data = dd)
+cambioX <- lm(x ~ epoch*sin(2*pi*epoch/tx)+epoch*cos(2*pi*epoch/tx) + x_sim + y_sim , data = dd)
+cambioY <- lm(y ~ epoch*sin(2*pi*epoch/ty)+epoch*cos(2*pi*epoch/ty) + x_sim + y_sim , data = dd)
 
-plot(dd$x, dd$y)
+plot(dd$x, dd$y, type="l")
 lines(dd$x_sim, dd$y_sim, col ="blue")
-points(predict(cambioX), predict(cambioY), col="red")
+lines(predict(cambioX), predict(cambioY), col="red")
 ```
 
 Predecir
