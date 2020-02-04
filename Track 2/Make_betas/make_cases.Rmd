@@ -1,0 +1,82 @@
+---
+title: "Make_cases"
+output: html_notebook
+---
+
+
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+
+dd <- read_csv("../data/train.csv")
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$first <- min(dd$epoch)
+dd$epoch <- dd$epoch - min(dd$epoch)
+head(dd)
+```
+
+
+Read periods
+```{r}
+TT <- read_csv("../data/periods.csv")
+```
+
+Read models
+```{r}
+num_mod <- read_csv("cases3.csv")
+```
+
+
+Generate periods -- put them int txt format
+```{r}
+for(i in 0:599){
+  for (j in 1:6){
+    write(toString(TT[i+1,j]), file = "periods.txt", append=TRUE)
+  }
+}
+
+```
+
+```{r}
+coefficients <- function(sat, coord, num_model) {
+    t1 <- unlist(TT[sat+1,coord])
+
+    tr <- dd %>% filter(sat_id == sat)
+    
+    tr$aux <- unlist(tr[,coord+3])
+    
+    if (num_model == 1) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 2) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr)
+    } else if (num_model == 3) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 4) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 5) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr)
+    } 
+  
+    lmX$coefficients
+}
+```
+
+Generate coefs
+```{r}
+write(toString(dd$first[1]), file = "betas.txt", append=TRUE)  
+
+for(i in 0:599){
+    print(i)
+      
+    for (coo in 1:6) {
+        write(toString(coefficients(i, coo, num_model[i+1,coo+1])), file = "mixedfullperiods_betas.txt", append=TRUE)
+    }
+}
+```
+
+
+
