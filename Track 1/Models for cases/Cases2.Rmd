@@ -19,6 +19,16 @@ train$epoch <- train$epoch - min(train$epoch)
 
 TT <- read_csv("../../data/periods.csv")
 ```
+Plots
+```{r}
+plotea <- function(sat, coors) {
+  ddi <- filter(train, sat_id == sat)
+  for (c in coors) {
+    plot(ddi$epoch, unlist(ddi[,c+3]))
+  }
+}
+```
+
 Models
 ```{r}
 model <- function(sat, coord, num_model, pred=F) {
@@ -52,15 +62,18 @@ model <- function(sat, coord, num_model, pred=F) {
     } else if (num_model == 5) {
         lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr)
     } 
-  print(summary(lmX))
-    1
+  #print(summary(lmX))
+    
     if (!pred) score(predict(lmX, val), unlist(val[,coord+3]))
     else predict(lmX, tst)
 }
 ```
 
 ```{r}
-model(550, 1, ans[550+1,1+1], T)
+sat <- 37
+coord <- 6
+model(sat, coord, ans[sat+1,coord+1])
+model(sat, coord, 6)
 ```
 
 Cases
@@ -71,7 +84,7 @@ for (i in 0:599) {
   mods <- data.frame(sat_id=i,x=0,y=0,z=0,Vx=0,Vy=0,Vz=0)
   for (coo in 1:6) {
     mx <- 0
-    for (mod in 1:5) {
+    for (mod in c(last[i+1,coo+1], 6)) {
       sc <- model(i, coo, mod)
       if (sc > mx) {
         mx <- sc
@@ -79,12 +92,14 @@ for (i in 0:599) {
       }
     }
     mods[,coo+1] <- best
-    if (best != last[i+1,coo+1]) print("Something has changed.")
+    if (best != last[i+1,coo+1] & i %in% unique(test$sat_id)) {
+      print(sprintf("Satelite: %i, coord: %i, ha camiado al modelo: %i", i,coo,best))
+    }
   }
   if (i == 0) ans <- mods
   else ans <- rbind(ans, mods)
 }
-#write_csv(ans, "cases3.csv", quote=F)
+write_csv(ans, "cases4.csv", quote=F)
 ```
 
 
