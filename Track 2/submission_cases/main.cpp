@@ -162,7 +162,7 @@ double evaluate(double t, double x, int i, int index, int k, int num_model){
     if (num_model == 3) {
         for (int j = 18; j < 20; j += 2)  // epoch*sin and epoch * cos
             ans += M[index][k+j] * x * sin(pi*x*(j-16)/t) + M[index][k+j+1] * x * cos(pi*x*(j-16)/t);
-        for (int j = 20; j < 26; j += 2) // epoch * pos and epoch * vel
+        for (int j = 20; j < 26; ++j) // epoch * pos and epoch * vel
             ans += M[index][k+j] * x * data[i][j-17];     
     }
 
