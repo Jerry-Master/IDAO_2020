@@ -41,15 +41,21 @@ model <- function(sat, coord, num_model, pred=F) {
     
     val <- tr[limit:total,]
     tr <- tr[1:(limit-1),]
+    tr2 <- tr[as.integer(length(tr$id)*0.1):length(tr$id),]
     
     tr$aux <- unlist(tr[,coord+3])
+    tr2$aux <- unlist(tr2[,coord+3])
     val$aux <- unlist(val[,coord+3])
   } else {
     tr <- train %>% filter(sat_id == sat)
     tst <- test %>% filter(sat_id == sat)
+    tr2 <- tr[as.integer(length(tr$id)*0.1):length(tr$id),]
     
     tr$aux <- unlist(tr[,coord+3])
     tst$aux <- unlist(tst[,coord+3])
+    tr2$aux <- unlist(tr2[,coord+3])
+    
+    
   }
     if (num_model == 1) {
         lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
@@ -61,7 +67,17 @@ model <- function(sat, coord, num_model, pred=F) {
         lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
     } else if (num_model == 5) {
         lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr)
-    } 
+    } else if (num_model == 6) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 7) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr2)
+    } else if (num_model == 8) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 9) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 10) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr2)
+    }
   #print(summary(lmX))
     
     if (!pred) score(predict(lmX, val), unlist(val[,coord+3]))
@@ -84,7 +100,7 @@ for (i in 0:599) {
   mods <- data.frame(sat_id=i,x=0,y=0,z=0,Vx=0,Vy=0,Vz=0)
   for (coo in 1:6) {
     mx <- 0
-    for (mod in c(last[i+1,coo+1], 6)) {
+    for (mod in c(last[i+1,coo+1], 6,7,8,9,10)) {
       sc <- model(i, coo, mod)
       if (sc > mx) {
         mx <- sc
@@ -118,7 +134,7 @@ for (i in unique(test$sat_id)) {
 ```
 
 ```{r}
-write_csv(sol, "submission.csv", quote=F)
+write_csv(sol, "Submission.csv", quote=F)
 ```
 
 
