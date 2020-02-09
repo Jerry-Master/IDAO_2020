@@ -1,5 +1,516 @@
 ---
-title: "R Notebook"
+title: "Make_cases2"
 output: html_notebook
 ---
+
+
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+
+dd <- read_csv("../../data/train.csv")
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$first <- min(dd$epoch)
+dd$epoch <- dd$epoch - min(dd$epoch)
+head(dd)
+```
+
+
+Read periods
+```{r}
+TT <- read_csv("../../data/periods.csv")
+```
+
+Read models
+```{r}
+num_mod <- read_csv("../../Track 1/Models for cases/cases5.csv")
+```
+
+
+Generate periods -- put them int txt format
+```{r}
+for(i in 0:599){
+  for (j in 1:6){
+    write(toString(TT[i+1,j]), file = "periods.txt", append=TRUE)
+  }
+}
+
+```
+
+```{r}
+coefficients <- function(sat, coord, num_model) {
+  
+  t1 <- unlist(TT[sat+1,coord])
+  
+  tr <- dd %>% filter(sat_id == sat)
+  tr2 <- tr[as.integer(length(tr$id)*0.1):length(tr$id),]
+  tr3 <- tr[as.integer(length(tr$id)*0.25):length(tr$id),]
+  tr4 <- tr[as.integer(length(tr$id)*0.5):length(tr$id),]
+  
+  tr$aux <- unlist(tr[,coord+3])
+  tr2$aux <- unlist(tr2[,coord+3])
+  tr3$aux <- unlist(tr3[,coord+3])
+  tr4$aux <- unlist(tr4[,coord+3])
+
+  
+  #modelos iniciales
+          if (num_model == 1) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 2) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr)
+    } else if (num_model == 3) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 4) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 5) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr)
+    } 
+  
+  
+  #con tr2
+  #modelo lineal
+  else if (num_model == 6) {
+        lmX <- lm(aux ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+  }
+  
+  #3 armónicos
+      else if (num_model == 7) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 8) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch), tr2)
+    } else if (num_model == 9) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 10) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 11) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch), tr2)
+    }
+  
+  #4 armónicos
+      else if (num_model == 12) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 13) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch), tr2)
+    } else if (num_model == 14) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 15) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 16) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch), tr2)
+    }
+    
+  #5 armónicos
+      else if (num_model == 17) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 18) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr2)
+    } else if (num_model == 19) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 20) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 21) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr2)
+    }
+  
+  #6 armónicos
+      else if (num_model == 22) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 23) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch), tr2)
+    } else if (num_model == 24) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 25) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 26) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch), tr2)
+    }
+  
+  #7 armónicos
+      else if (num_model == 27) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 28) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch), tr2)
+    } else if (num_model == 29) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 30) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 31) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch), tr2)
+    }
+  
+  #8 armónicos
+      else if (num_model == 32) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 33) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch), tr2)
+    } else if (num_model == 34) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 35) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 36) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch), tr2)
+    }
+  
+  #9 armónios
+      else if (num_model == 37) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 38) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch), tr2)
+    } else if (num_model == 39) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 40) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 41) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch), tr2)
+    }
+  
+  #10 armónicos
+      else if (num_model == 42) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 43) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch), tr2)
+    } else if (num_model == 44) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 45) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 46) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch), tr2)
+    }#con tr2
+  #modelo lineal
+  else if (num_model == 47) {
+        lmX <- lm(aux ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+  }
+  
+  #3 armónicos
+      else if (num_model == 48) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 49) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch), tr)
+    } else if (num_model == 50) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 51) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 52) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch), tr)
+    }
+  
+  #4 armónicos
+      else if (num_model == 53) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 54) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch), tr)
+    } else if (num_model == 55) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 56) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 57) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch), tr)
+    }
+    
+  #5 armónicos
+      else if (num_model == 58) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 59) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr)
+    } else if (num_model == 60) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 61) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 62) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr)
+    }
+  
+  #6 armónicos
+      else if (num_model == 63) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 64) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch), tr)
+    } else if (num_model == 65) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 66) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 67) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch), tr)
+    }
+  
+  #7 armónicos
+      else if (num_model == 68) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 69) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch), tr)
+    } else if (num_model == 70) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 71) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 72) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch), tr)
+    }
+  
+  #8 armónicos
+      else if (num_model == 73) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 74) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch), tr)
+    } else if (num_model == 75) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 76) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 77) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch), tr)
+    }
+  
+  #9 armónios
+      else if (num_model == 78) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 79) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch), tr)
+    } else if (num_model == 80) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 81) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 82) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch), tr)
+    }
+  
+  #10 armónicos
+      else if (num_model == 83) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 84) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch), tr)
+    } else if (num_model == 85) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 86) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 87) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch), tr)
+    }
+    
+  else if (num_model == 88) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 89) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch), tr3)
+    } else if (num_model == 90) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 91) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 92) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch), tr3)
+    }
+  
+  #4 armónicos
+      else if (num_model == 93) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 94) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch), tr3)
+    } else if (num_model == 95) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 96) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 97) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch), tr3)
+    }
+    
+  #5 armónicos
+      else if (num_model == 98) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 99) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr3)
+    } else if (num_model == 100) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 101) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 102) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr3)
+    }
+  
+  #6 armónicos
+      else if (num_model == 103) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 104) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch), tr3)
+    } else if (num_model == 105) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 106) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 107) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch), tr3)
+    }
+  
+  #7 armónicos
+      else if (num_model == 108) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 109) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch), tr3)
+    } else if (num_model == 110) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 111) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 112) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch), tr3)
+    }
+  
+  #8 armónicos
+      else if (num_model == 113) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 114) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch), tr3)
+    } else if (num_model == 115) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 116) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 117) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch), tr3)
+    }
+  
+  #9 armónios
+      else if (num_model == 118) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 119) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch), tr3)
+    } else if (num_model == 120) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 121) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 122) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch), tr3)
+    }
+  
+  #10 armónicos
+      else if (num_model == 123) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 124) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch), tr3)
+    } else if (num_model == 125) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr3)
+    } else if (num_model == 126) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr3)
+    } else if (num_model == 127) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch), tr3)
+    }
+  
+  else if (num_model == 128) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 129) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch), tr4)
+    } else if (num_model == 130) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 131) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 132) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch), tr4)
+    }
+  
+  #4 armónicos
+      else if (num_model == 133) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 134) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch), tr4)
+    } else if (num_model == 135) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 136) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 137) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch), tr4)
+    }
+    
+  #5 armónicos
+      else if (num_model == 138) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 139) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr4)
+    } else if (num_model == 140) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 141) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 142) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr4)
+    }
+  
+  #6 armónicos
+      else if (num_model == 143) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 144) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch), tr4)
+    } else if (num_model == 145) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 146) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 147) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch), tr4)
+    }
+  
+  #7 armónicos
+      else if (num_model == 148) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 149) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch), tr4)
+    } else if (num_model == 150) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 151) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 152) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch), tr4)
+    }
+  
+  #8 armónicos
+      else if (num_model == 153) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 154) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch), tr4)
+    } else if (num_model == 155) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 156) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 157) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch), tr4)
+    }
+  
+  #9 armónios
+      else if (num_model == 158) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 159) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch), tr4)
+    } else if (num_model == 160) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 161) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 162) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch), tr4)
+    }
+  
+  #10 armónicos
+      else if (num_model == 163) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 164) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch), tr4)
+    } else if (num_model == 165) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(12*pi/t1*epoch)+epoch*cos(12*pi/t1*epoch)+epoch*sin(14*pi/t1*epoch)+epoch*cos(14*pi/t1*epoch)+epoch*sin(16*pi/t1*epoch)+epoch*cos(16*pi/t1*epoch)+epoch*sin(18*pi/t1*epoch)+epoch*cos(18*pi/t1*epoch)+epoch*sin(20*pi/t1*epoch)+epoch*cos(20*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr4)
+    } else if (num_model == 166) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr4)
+    } else if (num_model == 167) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+sin(12*pi/t1*epoch)+cos(12*pi/t1*epoch)+sin(14*pi/t1*epoch)+cos(14*pi/t1*epoch)+sin(16*pi/t1*epoch)+cos(16*pi/t1*epoch)+sin(18*pi/t1*epoch)+cos(18*pi/t1*epoch)+sin(20*pi/t1*epoch)+cos(20*pi/t1*epoch), tr4)
+    }
+    print(summary(lmX))
+    toString(lmX$coefficients)
+}
+```
+
+Generate coefs
+```{r}
+write(toString(dd$first[1]), file = "betas.txt", append=TRUE)  
+
+for(i in 0:599){
+    print(i)
+      
+    for (coo in 1:6) {
+        write(coefficients(i, coo, num_mod[i+1,coo+1]), file = "betas.txt", append=TRUE)
+    }
+}
+```
+
+
 
