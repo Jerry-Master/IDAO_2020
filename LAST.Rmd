@@ -274,14 +274,12 @@ score <- function(val_pred, val_real) {
 
 
 
-
-
 Function if pred is false, returns the crossvalidation for the model, if pred is true returns the prediction using that model
 ```{r}
 model <- function(sat, coord, num_model, pred=F) {
   t1 <- unlist(TT[sat+1,coord])
   if (!pred) {
-    tr <- train %>% filter(sat_id == sat)
+    tr <- dd %>% filter(sat_id == sat)
   
     total <- length(tr$epoch)
     limit <- as.integer(0.8 * total)
@@ -298,7 +296,7 @@ model <- function(sat, coord, num_model, pred=F) {
     tr4$aux <- unlist(tr4[,coord+3])
     val$aux <- unlist(val[,coord+3])
   } else {
-    tr <- train %>% filter(sat_id == sat)
+    tr <- dd %>% filter(sat_id == sat)
     tst <- test %>% filter(sat_id == sat)
     tr2 <- tr[as.integer(length(tr$id)*0.1):length(tr$id),]
     tr3 <- tr[as.integer(length(tr$id)*0.25):length(tr$id),]
