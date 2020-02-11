@@ -770,7 +770,7 @@ for (i in 0:599) {
   for (coo in 1:6) {
     best <- 0
     mx <- 0
-    for (mod in  c(48:167)) {
+    for (mod in  c(1:167)) {
       sc <- model(i, coo, mod)
       if (sc > mx) {
         mx <- sc
