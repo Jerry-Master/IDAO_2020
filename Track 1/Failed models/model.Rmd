@@ -1,0 +1,139 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+
+
+dd <- read_csv("train.csv")
+dd$dist <- sqrt(dd$x^2 + dd$y^2 + dd$z^2)
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$epoch <- dd$epoch - min(dd$epoch)
+head(dd)
+```
+Models lineals només posició i velocitat
+
+```{r}
+dd <- filter(dd, sat_id==0)
+lm0X <- lm(x~1, dd)
+lm0Y <- lm(y~1, dd)
+lm0Z <- lm(z~1, dd)
+
+lmX <- lm(x~x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, dd)
+lmY <- lm(y~x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, dd)
+lmZ <- lm(z~x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, dd)
+```
+
+Mirem
+```{r}
+summary(lmX)
+summary(lmY)
+summary(lmZ)
+```
+Mirem més
+```{r}
+anova(lm0X, lmX)
+anova(lm0Y, lmY)
+anova(lm0Z, lmZ)
+
+Anova(lmX)
+Anova(lmY)
+Anova(lmZ)
+```
+
+```{r}
+plot(lmX, 1)
+plot(lmX, 2)
+```
+```{r}
+glmX0 <- glm(x ~ 1, family = gaussian(link="sin"), dd)
+glmY0 <- glm(y ~ 1, family = Gamma(), dd)
+glmZ0 <- glm(z ~ 1, family = Gamma(), dd)
+  
+  
+glmX <- glm(x ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, family = Gamma(), dd) 
+glmY <- glm(y ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, family = Gamma(), dd)
+glmZ <- glm(z ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, family = Gamma(), dd)
+```
+```{r}
+dd1 <- filter(dd, sat_id==520)
+
+hist(dd1$x, breaks = "Scott")
+
+hist(dd1$y, breaks = "Scott")
+
+hist(dd1$z, breaks = "Scott")
+
+hist(dd1$dist, breaks = "Scott")
+
+rang = 500000
+
+plot(x=dd1$epoch[dd1$epoch< rang], y=dd1$dist[dd1$epoch<rang])
+
+plot(x=dd1$epoch[dd1$epoch>max(dd1$epoch)-rang], y=dd1$dist[dd1$epoch>max(dd1$epoch)-rang])
+
+
+
+plot(x=dd1$epoch[dd1$epoch< rang], y=dd1$Vx_sim[dd1$epoch<rang])
+
+plot(x=dd1$epoch[dd1$epoch>max(dd1$epoch)-rang], y=dd1$Vx_sim[dd1$epoch>max(dd1$epoch)-rang])
+
+
+```
+Nous models
+
+```{r}
+lmX2 <- lm(x ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+lmY2 <- lm(y ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+lmZ2 <- lm(z ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+```
+
+```{r}
+summary(lmX2)
+Anova(lmX2)
+
+summary(lmY2)
+Anova(lmY2)
+
+summary(lmZ2)
+Anova(lmZ2)
+```
+```{r}
+plot(lmX2, 2)
+```
+```{r}
+
+for (i in 1:600){
+ ddi <- filter(dd, sat_id==i)
+  
+ lmX <- lm(x ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+ lmY <- lm(y ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+ lmZ <- lm(z ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+
+ lmVx <- lm(Vx ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+ lmVy <- lm(Vy ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+ lmVz <- lm(Vz ~ x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim+epoch, dd)
+  
+  
+
+ 
+ 
+ 
+ }
+  
+  
+```
+
+
+
+
+
+

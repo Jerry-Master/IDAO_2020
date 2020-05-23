@@ -1,0 +1,60 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+
+setwd("C:/Users/aleix/OneDrive/Escriptori/IDAO/data")
+dd <- read_csv("train.csv")
+dd$dist <- sqrt(dd$x^2 + dd$y^2 + dd$z^2)
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+dd$first <- min(dd$epoch)
+dd$epoch <- dd$epoch - min(dd$epoch)
+head(dd)
+
+```
+
+
+
+```{r}
+write(toString(dd$first[1]), file = "sin_betas.txt", append=TRUE)  
+
+for(i in 0:599){
+    print(i)
+    
+    ddi <- filter(dd, sat_id==i)
+    t <- (ddi$epoch[25]-ddi$epoch[1])
+    
+    write(toString(t), file = "sin_betas.txt", append=TRUE)  
+    
+ lmX <- lm(x ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmY <- lm(y ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmZ <- lm(z ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+
+ lmVx <- lm(Vx ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmVy <- lm(Vy ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ lmVz <- lm(Vz ~ sin(2*pi/t*epoch)+cos(2*pi/t*epoch)+sin(4*pi/t*epoch)+cos(4*pi/t*epoch)+sin(6*pi/t*epoch)+cos(6*pi/t*epoch)+sin(8*pi/t*epoch)+cos(8*pi/t*epoch)+sin(10*pi/t*epoch)+cos(10*pi/t*epoch)
++x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+      
+     write(toString(lmX$coefficients), file = "sin_betas.txt", append=TRUE)
+     write(toString(lmY$coefficients), file = "sin_betas.txt", append=TRUE)
+     write(toString(lmZ$coefficients), file = "sin_betas.txt", append=TRUE)
+     write(toString(lmVx$coefficients), file = "sin_betas.txt", append=TRUE)
+     write(toString(lmVy$coefficients), file = "sin_betas.txt", append=TRUE)
+     write(toString(lmVz$coefficients), file = "sin_betas.txt", append=TRUE)
+}
+```
+

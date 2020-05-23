@@ -1,0 +1,195 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Libreias
+```{r}
+library(tidyverse)
+library (car)
+library (ridge)
+```
+
+Data
+```{r}
+train <- read_csv("../../data/train.csv")
+test <- read_csv("../../data/test.csv")
+
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+train$epoch <- as.numeric(as.POSIXct(train$epoch))
+test$epoch <- test$epoch - min(train$epoch)
+train$epoch <- train$epoch - min(train$epoch)
+
+train$x <- as.numeric(train$x)
+train$y <- as.numeric(train$y)
+train$z <- as.numeric(train$z)
+train$Vx <- as.numeric(train$Vx)
+train$Vy <- as.numeric(train$Vy)
+train$Vz <- as.numeric(train$Vz)
+
+TT <- read_csv("../../data/periods.csv")
+```
+
+Satelites malo
+```{r}
+badsat <- read_csv("BADSAT.txt")
+badsat
+```
+
+Normal regression
+```{r}
+for (i in unique(badsat$sat_id)){
+  print(i)
+ ddi <- filter(dd, sat_id==i)
+ testi <- filter(dd, sat_id==i)
+ testi <- rbind(select(testi, id, sat_id, epoch, x_sim, y_sim, z_sim, Vx_sim, Vy_sim, Vz_sim), filter(test, sat_id==i))
+ 
+  t1 <- unlist(TT[i+1,1])
+  t2 <- unlist(TT[i+1,2])
+  t3 <- unlist(TT[i+1,3])
+  t4 <- unlist(TT[i+1,4])
+  t5 <- unlist(TT[i+1,5])
+  t6 <- unlist(TT[i+1,6])
+  
+  
+ lmX <- lm(x ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+ lmY <- lm(y ~ epoch+sin(2*pi/t2*epoch)+cos(2*pi/t2*epoch)+sin(4*pi/t2*epoch)+cos(4*pi/t2*epoch)+sin(6*pi/t2*epoch)+cos(6*pi/t2*epoch)+sin(8*pi/t2*epoch)+cos(8*pi/t2*epoch)+sin(10*pi/t2*epoch)+cos(10*pi/t2*epoch)+epoch*sin(2*pi/t2*epoch)+epoch*cos(2*pi/t2*epoch)+epoch*sin(4*pi/t2*epoch)+epoch*cos(4*pi/t2*epoch)+epoch*sin(6*pi/t2*epoch)+epoch*cos(6*pi/t2*epoch)+epoch*sin(8*pi/t2*epoch)+epoch*cos(8*pi/t2*epoch)+epoch*sin(10*pi/t2*epoch)+epoch*cos(10*pi/t2*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+ lmZ <- lm(z ~ epoch+sin(2*pi/t3*epoch)+cos(2*pi/t3*epoch)+sin(4*pi/t3*epoch)+cos(4*pi/t3*epoch)+sin(6*pi/t3*epoch)+cos(6*pi/t3*epoch)+sin(8*pi/t3*epoch)+cos(8*pi/t3*epoch)+sin(10*pi/t3*epoch)+cos(10*pi/t3*epoch)+epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+
+ lmVx <- lm(Vx ~ epoch+sin(2*pi/t4*epoch)+cos(2*pi/t4*epoch)+sin(4*pi/t4*epoch)+cos(4*pi/t4*epoch)+sin(6*pi/t4*epoch)+cos(6*pi/t4*epoch)+sin(8*pi/t4*epoch)+cos(8*pi/t4*epoch)+sin(10*pi/t4*epoch)+cos(10*pi/t4*epoch)+epoch*sin(2*pi/t4*epoch)+epoch*cos(2*pi/t4*epoch)+epoch*sin(4*pi/t4*epoch)+epoch*cos(4*pi/t4*epoch)+epoch*sin(6*pi/t4*epoch)+epoch*cos(6*pi/t4*epoch)+epoch*sin(8*pi/t4*epoch)+epoch*cos(8*pi/t4*epoch)+epoch*sin(10*pi/t4*epoch)+epoch*cos(10*pi/t4*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+ lmVy <- lm(Vy ~ epoch+sin(2*pi/t5*epoch)+cos(2*pi/t5*epoch)+sin(4*pi/t5*epoch)+cos(4*pi/t5*epoch)+sin(6*pi/t5*epoch)+cos(6*pi/t5*epoch)+sin(8*pi/t5*epoch)+cos(8*pi/t5*epoch)+sin(10*pi/t5*epoch)+cos(10*pi/t5*epoch)+epoch*sin(2*pi/t5*epoch)+epoch*cos(2*pi/t5*epoch)+epoch*sin(4*pi/t5*epoch)+epoch*cos(4*pi/t5*epoch)+epoch*sin(6*pi/t5*epoch)+epoch*cos(6*pi/t5*epoch)+epoch*sin(8*pi/t5*epoch)+epoch*cos(8*pi/t5*epoch)+epoch*sin(10*pi/t5*epoch)+epoch*cos(10*pi/t5*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+ lmVz <- lm(Vz ~ epoch+sin(2*pi/t6*epoch)+cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch)+epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+  
+ if (i == unique(badsat$sat_id)[1]) {
+  ans <- data.frame(id = testi$id, sat_id=testi$sat_id, epoch=testi$epoch, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+ } else{
+  ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, epoch=testi$epoch, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+ }
+}
+```
+
+```{r}
+for (i in unique(badsat$sat_id)) {
+  print(i)
+  sat <- filter(train, sat_id==i)
+  sat_pred <- filter(ans, sat_id==i)
+  
+  plot(sat_pred$epoch, sat_pred$x, col="red", type="l")
+  lines(sat$epoch, sat$x, type = "l", col="blue")
+}
+```
+
+Ridge regression
+```{r}
+for (i in unique(badsat$sat_id)){
+  print(i)
+ ddi <- filter(dd, sat_id==i)
+ testi <- filter(dd, sat_id==i)
+ testi <- rbind(select(testi, id, sat_id, epoch, x_sim, y_sim, z_sim, Vx_sim, Vy_sim, Vz_sim), filter(test, sat_id==i))
+ 
+  t1 <- unlist(TT[i+1,1])
+  t2 <- unlist(TT[i+1,2])
+  t3 <- unlist(TT[i+1,3])
+  t4 <- unlist(TT[i+1,4])
+  t5 <- unlist(TT[i+1,5])
+  t6 <- unlist(TT[i+1,6])
+  
+  
+ lmX <- linearRidge(x ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi, scaling="scale", lambda = 10^seq(-3,2,.1))
+ 
+ lmY <- linearRidge(y ~ epoch+sin(2*pi/t2*epoch)+cos(2*pi/t2*epoch)+sin(4*pi/t2*epoch)+cos(4*pi/t2*epoch)+sin(6*pi/t2*epoch)+cos(6*pi/t2*epoch)+sin(8*pi/t2*epoch)+cos(8*pi/t2*epoch)+sin(10*pi/t2*epoch)+cos(10*pi/t2*epoch)+epoch*sin(2*pi/t2*epoch)+epoch*cos(2*pi/t2*epoch)+epoch*sin(4*pi/t2*epoch)+epoch*cos(4*pi/t2*epoch)+epoch*sin(6*pi/t2*epoch)+epoch*cos(6*pi/t2*epoch)+epoch*sin(8*pi/t2*epoch)+epoch*cos(8*pi/t2*epoch)+epoch*sin(10*pi/t2*epoch)+epoch*cos(10*pi/t2*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+ lmZ <- linearRidge(z ~ epoch+sin(2*pi/t3*epoch)+cos(2*pi/t3*epoch)+sin(4*pi/t3*epoch)+cos(4*pi/t3*epoch)+sin(6*pi/t3*epoch)+cos(6*pi/t3*epoch)+sin(8*pi/t3*epoch)+cos(8*pi/t3*epoch)+sin(10*pi/t3*epoch)+cos(10*pi/t3*epoch)+epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+
+ lmVx <- linearRidge(Vx ~ epoch+sin(2*pi/t4*epoch)+cos(2*pi/t4*epoch)+sin(4*pi/t4*epoch)+cos(4*pi/t4*epoch)+sin(6*pi/t4*epoch)+cos(6*pi/t4*epoch)+sin(8*pi/t4*epoch)+cos(8*pi/t4*epoch)+sin(10*pi/t4*epoch)+cos(10*pi/t4*epoch)+epoch*sin(2*pi/t4*epoch)+epoch*cos(2*pi/t4*epoch)+epoch*sin(4*pi/t4*epoch)+epoch*cos(4*pi/t4*epoch)+epoch*sin(6*pi/t4*epoch)+epoch*cos(6*pi/t4*epoch)+epoch*sin(8*pi/t4*epoch)+epoch*cos(8*pi/t4*epoch)+epoch*sin(10*pi/t4*epoch)+epoch*cos(10*pi/t4*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+ lmVy <- linearRidge(Vy ~ epoch+sin(2*pi/t5*epoch)+cos(2*pi/t5*epoch)+sin(4*pi/t5*epoch)+cos(4*pi/t5*epoch)+sin(6*pi/t5*epoch)+cos(6*pi/t5*epoch)+sin(8*pi/t5*epoch)+cos(8*pi/t5*epoch)+sin(10*pi/t5*epoch)+cos(10*pi/t5*epoch)+epoch*sin(2*pi/t5*epoch)+epoch*cos(2*pi/t5*epoch)+epoch*sin(4*pi/t5*epoch)+epoch*cos(4*pi/t5*epoch)+epoch*sin(6*pi/t5*epoch)+epoch*cos(6*pi/t5*epoch)+epoch*sin(8*pi/t5*epoch)+epoch*cos(8*pi/t5*epoch)+epoch*sin(10*pi/t5*epoch)+epoch*cos(10*pi/t5*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+ lmVz <- linearRidge(Vz ~ epoch+sin(2*pi/t6*epoch)+cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch)+epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+  
+ if (i == unique(badsat$sat_id)[1]) {
+  ans <- data.frame(id = testi$id, sat_id=testi$sat_id, epoch=testi$epoch, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+ } else{
+  ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, epoch=testi$epoch, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+ }
+}
+```
+
+```{r}
+for (i in unique(badsat$sat_id)) {
+  print(i)
+  sat <- filter(train, sat_id==i)
+  sat_pred <- filter(ans, sat_id==i)
+  
+  plot(sat_pred$epoch, sat_pred$x, col="red", type="l")
+  lines(sat$epoch, sat$x, type = "l", col="blue")
+}
+```
+
+
+```{r}
+minims <- function(v) {
+  ans <- c()
+  for (i in 2:(length(v)-1)) {
+    if (v[i] < v[i+1] && v[i] < v[i-1]) {
+      ans <- c(ans, i)
+    }
+  }
+  ans
+}
+
+maxims <- function(v) {
+  ans <- c()
+  for (i in 2:(length(v)-1)) {
+    if (v[i] > v[i+1] && v[i] > v[i-1]) {
+      ans <- c(ans, i)
+    }
+  }
+  ans
+}
+```
+
+```{r}
+ddi <- filter(train, sat_id==badsat$sat_id[3])
+tti <- data.frame(id=ddi$id, sat_id=ddi$sat_id, epoch=ddi$epoch, x=predict(lmX, ddi), y=predict(lmY, ddi), z=predict(lmZ, ddi), Vx=predict(lmVX, ddi), Vy=predict(lmVY, ddi), VZ=predict(lmVZ, ddi))
+tti <- filter(ans, sat_id==badsat$sat_id[3])
+
+minddiX <- ddi[minims(ddi$x),]
+rectaXdown <- lm(x ~ epoch, data = minddiX)
+maxddiX <- ddi[maxims(ddi$x),]
+rectaXup <- lm(x ~ epoch, data = maxddiX)
+
+minttiX <- tti[minims(tti$x),]
+rectaXdownt <- lm(x ~ epoch, data = minttiX)
+maxttiX <- tti[maxims(tti$x),]
+rectaXupt <- lm(x ~ epoch, data = maxttiX)
+plot(minttiX$epoch, minttiX$x)
+points(maxttiX$epoch, maxttiX$x)
+
+c <- predict(rectaXdown, tti)
+d <- predict(rectaXup, tti)
+
+tti$x <- (tti$x - predict(rectaXdownt, tti)) * (d-c) / (predict(rectaXupt,tti) - predict(rectaXdownt, tti)) + c
+
+plot(tti$epoch, tti$x, col="red", type="p", ylim=c(min(sat$x),max(sat$x)))
+lines(sat$epoch, sat$x, type = "p", col="blue")
+```
+Exportar
+```{r}
+sat <- filter(train, sat_id==badsat$sat_id[3])
+sat_pred <- filter(ans, sat_id==badsat$sat_id[3])
+
+write_csv(ddi, "train.csv", quote=F)
+write_csv(tti, "submission.csv", quote=F)
+```
+
+
+
+
+

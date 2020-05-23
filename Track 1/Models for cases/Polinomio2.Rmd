@@ -1,0 +1,135 @@
+---
+title: "R Notebook"
+output: html_document
+---
+
+Librerias
+```{r}
+library(tidyverse)
+library(car)
+library(ridge)
+```
+
+Data
+```{r}
+train <- read_csv("../../data/train.csv")
+test <- read_csv("../../data/test.csv")
+
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+train$epoch <- as.numeric(as.POSIXct(train$epoch))
+test$epoch <- test$epoch - min(train$epoch)
+train$epoch <- train$epoch - min(train$epoch)
+
+TT <- read_csv("../../data/periods.csv")
+```
+
+
+## Minims
+Calcula los mínimos locales de un vector.
+Return: indices de los mínimos
+```{r}
+minims <- function(v) {
+  ans <- c()
+  for (i in 2:(length(v)-1)) {
+    if (v[i] < v[i+1] && v[i] < v[i-1]) {
+      ans <- c(ans, i)
+    }
+  }
+  ans
+}
+```
+## Maxims
+Calcula los maximos locales de un vector.
+Return: indices de los maximos
+```{r}
+maxims <- function(v) {
+  ans <- c()
+  for (i in 2:(length(v)-1)) {
+    if (v[i] > v[i+1] && v[i] > v[i-1]) {
+      ans <- c(ans, i)
+    }
+  }
+  ans
+}
+```
+
+## Corregir orbita
+```{r}
+for (i in c(37, 253, 372, 470, 473, 514, 523, 587)) {
+  print(i)
+  ddi <- train %>% filter(sat_id == i)
+  
+  minddiX <- ddi[minims(ddi$x),]
+  rectaXdown <- lm(x ~ epoch, data = minddiX)
+  maxddiX <- ddi[maxims(ddi$x),]
+  rectaXup <- lm(x ~ epoch, data = maxddiX)
+  ddi$x <- (ddi$x - predict(rectaXdown, ddi)) * 2 / (predict(rectaXup,ddi) - predict(rectaXdown, ddi)) - 1
+
+  # sim
+  minddiX_sim <- ddi[minims(ddi$x_sim),]
+  rectaXdown_sim <- lm(x_sim ~ epoch, data = minddiX_sim)
+  maxddiX_sim <- ddi[maxims(ddi$x_sim),]
+  rectaXup_sim <- lm(x_sim ~ epoch, data = maxddiX_sim)
+  ddi$x_sim <- (ddi$x_sim - predict(rectaXdown_sim, ddi)) * 2 / (predict(rectaXup_sim,ddi) - predict(rectaXdown_sim, ddi)) - 1
+  
+  if (i == 37) {
+  ans <- ddi
+ } else{
+  ans <- rbind(ans, ddi)
+ }
+}
+
+corr <- ans
+
+# ans$id <- format(ans$id, scientific = F)
+# ans$x <- format(ans$x, scientific = F)
+# ans$y <- format(ans$y, scientific = F)
+# ans$z <- format(ans$z, scientific = F)
+# ans$Vx <- format(ans$Vx, scientific = F)
+# ans$Vy <- format(ans$Vy, scientific = F)
+# ans$Vz <- format(ans$Vz, scientific = F)
+# 
+# write.csv(ans, "corrected.csv", quote = F, row.names = F)
+```
+## Visualizacion
+```{r}
+for (i in unique(corr$sat_id)) {
+  tx <- unlist(TT[i+1,1])
+  ddi <- filter(corr, sat_id == i)
+  plot(ddi$epoch[1:240], ddi$x[1:240])
+  k <- 4
+  i0 <- k*240
+  initial <- ddi$x[i0]
+  while (abs((initial - ddi$x[1]) %% tx) > 1000.) {
+    i0 <- i0+1
+    initial <- ddi$x[i0]
+  }
+  points(ddi$epoch[i0:(i0+240)]-ddi$epoch[i0], ddi$x[i0:(i0+240)], col="blue")
+}
+```
+
+```{r}
+for (i in unique(corr$sat_id)) {
+  ddi <- filter(corr, sat_id == i)
+  testi <- filter(test, sat_id == i)
+  plot(testi$epoch[1:240], ddi$x[1:240])
+}
+```
+
+## Period decay estimation
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+

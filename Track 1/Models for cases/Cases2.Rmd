@@ -1,0 +1,219 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(car)
+```
+
+```{r}
+train <- read_csv("../../data/train.csv")
+test <- read_csv("../../data/test.csv")
+
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+train$epoch <- as.numeric(as.POSIXct(train$epoch))
+test$epoch <- test$epoch - min(train$epoch)
+train$epoch <- train$epoch - min(train$epoch)
+
+TT <- read_csv("../../data/periods.csv")
+```
+Plots
+```{r}
+plotea <- function(sat, coors) {
+  ddi <- filter(train, sat_id == sat)
+  for (c in coors) {
+    plot(ddi$epoch, unlist(ddi[,c+3]))
+  }
+}
+```
+
+Models
+```{r}
+model <- function(sat, coord, num_model, pred=F) {
+  t1 <- unlist(TT[sat+1,coord])
+  if (!pred) {
+    tr <- train %>% filter(sat_id == sat)
+  
+    total <- length(tr$epoch)
+    limit <- as.integer(0.8 * total)
+    
+    val <- tr[limit:total,]
+    tr <- tr[1:(limit-1),]
+    tr2 <- tr[as.integer(length(tr$id)*0.1):length(tr$id),]
+    
+    tr$aux <- unlist(tr[,coord+3])
+    tr2$aux <- unlist(tr2[,coord+3])
+    val$aux <- unlist(val[,coord+3])
+  } else {
+    tr <- train %>% filter(sat_id == sat)
+    tst <- test %>% filter(sat_id == sat)
+    tr2 <- tr[as.integer(length(tr$id)*0.1):length(tr$id),]
+    
+    tr$aux <- unlist(tr[,coord+3])
+    tst$aux <- unlist(tst[,coord+3])
+    tr2$aux <- unlist(tr2[,coord+3])
+    
+    
+  }
+    if (num_model == 1) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 2) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr)
+    } else if (num_model == 3) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr)
+    } else if (num_model == 4) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+    } else if (num_model == 5) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr)
+    } else if (num_model == 6) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 7) {
+        lmX <- lm(aux ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), tr2)
+    } else if (num_model == 8) {
+        lmX <- lm(aux ~ epoch+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, tr2)
+    } else if (num_model == 9) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr2)
+    } else if (num_model == 10) {
+        lmX <- lm(aux ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch), tr2)
+    }
+  #print(summary(lmX))
+    
+    if (!pred) score(predict(lmX, val), unlist(val[,coord+3]))
+    else predict(lmX, tst)
+}
+```
+
+```{r}
+sat <- 37
+coord <- 6
+model(sat, coord, ans[sat+1,coord+1])
+model(sat, coord, 6)
+```
+
+Cases
+```{r}
+last <- read_csv("cases3.csv")
+for (i in 0:599) {
+  print(i)
+  mods <- data.frame(sat_id=i,x=0,y=0,z=0,Vx=0,Vy=0,Vz=0)
+  for (coo in 1:6) {
+    mx <- 0
+    for (mod in c(last[i+1,coo+1], 6,7,8,9,10)) {
+      sc <- model(i, coo, mod)
+      if (sc > mx) {
+        mx <- sc
+        best <- mod
+      }
+    }
+    mods[,coo+1] <- best
+    if (best != last[i+1,coo+1] & i %in% unique(test$sat_id)) {
+      print(sprintf("Satelite: %i, coord: %i, ha camiado al modelo: %i", i,coo,best))
+    }
+  }
+  if (i == 0) ans <- mods
+  else ans <- rbind(ans, mods)
+}
+write_csv(ans, "cases4.csv", quote=F)
+```
+
+
+Predict
+```{r}
+for (i in unique(test$sat_id)) {
+  print(i)
+  pred <- filter(test, sat_id==i)
+  for (coor in 1:6) {
+    pred[,coor+3] <- model(i, coor, ans[i+1, coor+1], T)
+  }
+  
+  if (i == unique(test$sat_id)[1]) sol <- data.frame(id=pred$id, x=unlist(pred[,1+3]), y=unlist(pred[,2+3]), z=unlist(pred[,3+3]), Vx=unlist(pred[,4+3]), Vy=unlist(pred[,5+3]), Vz=unlist(pred[,6+3]))
+  else sol <- rbind(sol, data.frame(id=pred$id, x=unlist(pred[,1+3]), y=unlist(pred[,2+3]), z=unlist(pred[,3+3]), Vx=unlist(pred[,4+3]), Vy=unlist(pred[,5+3]), Vz=unlist(pred[,6+3])))
+}
+```
+
+```{r}
+write_csv(sol, "Submission.csv", quote=F)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+train37 <- train %>% filter(sat_id == 37)
+
+total <- length(train37$epoch)
+limit <- as.integer(0.6 * total)
+
+val37 <- train37[limit:total,]
+train37 <- train37[1:(limit-1),]
+
+
+train587 <- train %>% filter(sat_id == 587)
+
+total <- length(train587$epoch)
+limit <- as.integer(0.6 * total)
+
+val587 <- train587[limit:total,]
+train587 <- train587[1:(limit-1),]
+```
+
+```{r}
+modZ <- function(tr, val, i, append=T) {
+    t3 <- unlist(TT[i+1, 3])
+  
+   lmZ <- lm(z ~ epoch+sin(2*pi/t3*epoch)+cos(2*pi/t3*epoch)+sin(4*pi/t3*epoch)+cos(4*pi/t3*epoch)+sin(6*pi/t3*epoch)+cos(6*pi/t3*epoch)+sin(8*pi/t3*epoch)+cos(8*pi/t3*epoch)+sin(10*pi/t3*epoch)+cos(10*pi/t3*epoch), tr)
+   
+    #lmZ <- lm(z ~ epoch+sin(2*pi/t3*epoch)+cos(2*pi/t3*epoch)+sin(4*pi/t3*epoch)+cos(4*pi/t3*epoch)+sin(6*pi/t3*epoch)+cos(6*pi/t3*epoch)+sin(8*pi/t3*epoch)+cos(8*pi/t3*epoch)+sin(10*pi/t3*epoch)+cos(10*pi/t3*epoch)+epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, tr)
+   
+   if (append) predict(lmZ, rbind(tr, val))
+   else predict(lmZ, val)
+}
+
+score <- function(val_pred, val_real) {
+  smape <- mean(abs(val_pred - val_real) / (abs(val_pred)+abs(val_real)))
+  100 * (1 - smape)
+}
+```
+
+```{r}
+clean <- function(df) {
+  rem <- which(periods(df$epoch)<1) 
+  df[-rem,]
+}
+```
+
+```{r}
+plot(c(train37$epoch, val37$epoch), modZ(train37, val37, 37))
+points(train37$epoch, train37$z, col="blue")
+print(score(modZ(train37, val37, 37, F), val37$z))
+```
+
+
+```{r}
+a <- 24*22+1
+b <- 24*25
+plot(train37$epoch[a:b], train37$z[a:b])
+mins <- minims(train37$z[a:b])
+points(train37$epoch[a:b][mins], train37$z[a:b][mins], col = "red")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,332 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Llibraries
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(RcmdrMisc)
+library(dplyr)
+```
+
+Dades
+```{r}
+setwd("../../../data")
+train <- read_csv("train.csv")
+
+test <- read_csv("test.csv") 
+
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+train$epoch <- as.numeric(as.POSIXct(train$epoch))
+
+test$epoch <- test$epoch - min(train$epoch)
+train$epoch <- train$epoch - min(train$epoch)
+
+head(train)
+head(test)
+```
+
+Las pruebas se haran sobre el 249
+```{r}
+ids <- 37
+pr_train <- filter(train, sat_id == ids)
+pr_test <- filter(test, sat_id == ids)
+```
+
+
+Visualizar una elipse
+```{r}
+a <- 1+75*24
+b <- a+24
+plot(pr_train$x[a:b], pr_train$y[a:b], type="l", col="blue")
+```
+
+Estimar la elipse
+- Periodo
+```{r}
+TT <- read_csv("../../../data/periods.csv")
+tx <- unlist(TT[ids+1,1])
+ty <- unlist(TT[ids+1,2])
+```
+- Intento de velocidad angular
+```{r}
+mod <- function(v){
+  sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
+}
+
+vect_prod <- function(v1, v2){
+  c(v1[2]*v2[3]-v1[3]*v2[2], v1[3]*v2[1]-v1[1]*v2[3], v1[1]*v2[2]-v1[2]*v2[1])
+}
+
+ang_vel <- function(dat) {
+  ans <- c()
+  for (i in 1:length(dat$epoch)){
+    r <- c(dat$x[i], dat$y[i], 0)
+    v <- c(dat$Vx[i], dat$Vy[i], 0)
+    ans <- c(ans, mod(vect_prod(r, v)) / (mod(r)^2))
+  }
+  ans
+}
+
+a <- 1+10*24
+b <- a+23
+
+pr_train$w <- ang_vel(pr_train)*pr_train$epoch
+plot(pr_train$epoch, ang_vel(pr_train), type="l")
+
+lmX <- lm(x ~ sin(w)+cos(w), data = pr_train[a:b,])
+lmY <- lm(y ~ sin(w)+cos(w), data = pr_train[a:b,])
+  
+plot(predict(lmX), predict(lmY), col="blue")
+points(pr_train$x[a:b], pr_train$y[a:b])
+```
+- Partiendo la elipse en trozos
+```{r}
+n_elipses <- function(dat, a, b, n, pred=T, test) {
+  delta <- 4
+  bi <- a-1
+  for (i in 1:n) {
+      ai <- bi+1
+      bi <- ai+delta-1
+      if (i == n) {
+        bi <- b
+      }
+      tx <- 6 * (pr_train$epoch[bi]-pr_train$epoch[ai])
+      ty <- tx
+        
+      lmX <- lm(x ~ sin(2*pi*epoch/tx)+cos(2*pi*epoch/tx), data = dat[ai:bi,])
+      lmY <- lm(y ~ sin(2*pi*epoch/ty)+cos(2*pi*epoch/ty), data = dat[ai:bi,])
+      
+      coefX <- lmX$coefficients
+      coefY <- lmY$coefficients
+      if (i == 1) {
+        ans <- data.frame(x=predict(lmX, test[ai:bi,]), y=predict(lmY, test[ai:bi,]))
+        coefs <- data.frame(ax=coefX[1], ax=coefX[1], bx=coefX[2], cx=coefX[3], by=coefY[2], cy=coefY[3])
+      } else {
+        ans <- rbind(ans, data.frame(x=predict(lmX, test[ai:bi,]), y=predict(lmY, test[ai:bi,])))
+        coefs <- rbind(coefs, data.frame(ax=coefX[1], ax=coefX[1], bx=coefX[2], cx=coefX[3], by=coefY[2], cy=coefY[3]))
+      }
+  }
+  if (pred) {ans}
+  else {coefs} 
+}
+
+a <- 1+22*24
+b <- a+23+0*24
+
+pred <- n_elipses(pr_train, a, b, as.integer((b-a+1)/4), test=pr_train)
+plot(pr_train$x[1:length(pr_train$y)], pr_train$y[1:length(pr_train$y)])
+points(pred$x, pred$y, col="blue")
+```
+- Extrapolar una elipse por modelo lineal
+```{r}
+dd <- pr_train
+dd$x_sim <- pred[c(rep(seq_len(nrow(pred)), 76),1:12), ]$x
+dd$y_sim <- pred[c(rep(seq_len(nrow(pred)), 76),1:12), ]$y
+dd$id <- (as.double(dd$id)-469143)/24
+
+cambioX <- lm(x ~ epoch*sin(2*pi*epoch/tx)+epoch*cos(2*pi*epoch/tx) + x_sim + y_sim , data = dd)
+cambioY <- lm(y ~ epoch*sin(2*pi*epoch/ty)+epoch*cos(2*pi*epoch/ty) + x_sim + y_sim , data = dd)
+
+plot(dd$x, dd$y, type="l")
+lines(dd$x_sim, dd$y_sim, col ="blue")
+lines(predict(cambioX), predict(cambioY), col="red")
+```
+Estimar centros
+```{r}
+dist <- function(P, recta) {
+  a <- recta$coefficients[2]
+  b <- recta$coefficients[1]
+  
+  abs(a * P[1] - P[2] + b) / sqrt(a^2+1)
+}
+dist_P <- function(P, Q) {
+  A <- c(P[1]-Q[1], P[2]-Q[2])
+  sqrt(A[1]^2 + A[2]^2)
+}
+centro <- function(traj) {
+  #plot(traj$x, traj$y)
+  eje <- lm(y ~ x, data = traj)
+  #lines(traj$x, predict(eje))
+  
+  for (i in 1:length(traj$x)){
+    if (i == 1){
+      m <- dist(c(traj$x[1], traj$y[1]), eje)
+      i_min <- 1
+    } else {
+      new_d <- dist(c(traj$x[i], traj$y[i]), eje)
+      if (new_d < m) {
+        m <- new_d
+        i_min <- i
+      }
+    }
+  }
+  mins <- c()
+  for (i in 1:length(traj$x)){
+    if (dist(c(traj$x[i], traj$y[i]), eje) < m+8000) {
+      mins <- c(mins, i)
+    }
+  }
+  
+  mins_izq <- c()
+  mins_der <- c()
+  for (i in 1:length(mins)){
+    if (dist_P(c(traj$x[mins[i]], traj$y[mins[i]]), c(traj$x[i_min], traj$y[i_min])) < 15000) {
+      mins_izq <- c(mins_izq, mins[i])
+    } else {
+      mins_der <- c(mins_der, mins[i])
+    }
+  }
+  
+  min_izqX <- mean(traj[mins_izq,]$x)
+  min_derX <- mean(traj[mins_der,]$x)
+  min_izqY <- mean(traj[mins_izq,]$y)
+  min_derY <- mean(traj[mins_der,]$y)
+  
+  c((min_izqX+min_derX)/2, (min_izqY+min_derY)/2)
+}
+```
+- Calcular centros
+```{r}
+k <- 0
+a <- 1 + k*24
+b <- 24 + k*24
+
+c1 <- centro(pr_train[a:b,])
+  
+plot(pr_train$x[a:b], pr_train$y[a:b])
+points(c1[1], c1[2])
+
+centros <- data.frame(x=c1[1], y = c1[2])
+while (b <= length(pr_train$x)) {
+  c1 <- centro(pr_train[a:b,])
+  
+  centros <- rbind(centros, data.frame(x=c1[1], y = c1[2]))
+  
+  k <- k+1
+  a <- 1 + k*24
+  b <- 24 + k*24
+}
+```
+- Visualizar un centro
+```{r}
+k <- 76
+a <- 1 + k*24
+b <- 24 + k*24
+
+plot(pr_train$x[a:b], pr_train$y[a:b])
+points(centros$x[k+1], centros$y[k+1])
+```
+- Visualizar todos los centros
+```{r}
+plot(pr_train$x, pr_train$y)
+lines(centros$x[1:76], centros$y[1:76], col="blue")
+```
+Estimar elipse por Kepler
+```{r}
+eccentricity <- function(r, v) {
+  mu <- 3.986004418*1e14
+  mod( vect_prod(v, vect_prod(r, v))/mu - r/mod(r) )
+}
+
+mean_anomaly <- function(t, t0, period) {
+  2 * pi * (t - t0) / period
+}
+
+eccentric_anomaly <- function(e, M) {
+  E <- M
+  while(TRUE) {
+    dE <- (E - e * sin(E) - M)/(1 - e * cos(E));
+    E <- E - dE;
+    if(abs(dE) < 1e-6) {
+      break
+    }
+  }
+  E
+}
+
+elipse <- function(dat, phi=pi/2) {
+  #plano <- lm(z ~ x + y, data=dat)
+  
+  lmX <- lm(x ~ sin(E+phi), data = dat)
+  lmY <- lm(y ~ cos(E+phi), data = dat)
+  
+  data.frame(x=predict(lmX), y=predict(lmY))
+}
+```
+- Primer intento
+```{r}
+k <- 0
+a <- 1 + k*24
+b <- 24 + (k+30)*24
+el1 <- pr_train[a:b,]
+
+E <- c()
+for (i in 1:length(el1$x)) {
+  r <- c(el1$x[i], el1$y[i], 0)
+  v <- c(el1$Vx[i], el1$Vy[i], 0)
+  t0 <- el1$epoch[as.integer(i/24)*24+(i%%24!=0)]+1500
+  t <- el1$epoch[i]
+  period <- tx
+  
+  E <- c(E, eccentric_anomaly(eccentricity(r, v), mean_anomaly(t, t0, period)))
+  
+}
+
+el1$E <- E
+pred <- elipse(el1)
+
+plot(el1$x, el1$y, col="blue", type = "l")
+lines(el1$x, predict(lm(y~x, data=el1)), col="blue")
+points(pred$x, pred$y, type="l")
+lines(pred$x, predict(lm(y~x, data=pred)))
+```
+
+Pasar a csv para visualizar
+```{r}
+# no_scientific <- function(ans, sim=F) {
+#   ans$id <- format(ans$id, scientific = F)
+#   ans$x <- format(ans$x, scientific = F)
+#   ans$y <- format(ans$y, scientific = F)
+#   ans$z <- format(ans$z, scientific = F)
+#   ans$Vx <- format(ans$Vx, scientific = F)
+#   ans$Vy <- format(ans$Vy, scientific = F)
+#   ans$Vz <- format(ans$Vz, scientific = F)
+#   
+#   if (sim) {
+#     ans$x_sim <- format(ans$x_sim, scientific = F)
+#     ans$y_sim <- format(ans$y_sim, scientific = F)
+#     ans$z_sim <- format(ans$z_sim, scientific = F)
+#     ans$Vx_sim <- format(ans$Vx_sim, scientific = F)
+#     ans$Vy_sim <- format(ans$Vy_sim, scientific = F)
+#     ans$Vz_sim <- format(ans$Vz_sim, scientific = F)
+#   }
+#   ans
+# }
+# 
+# output_train <- no_scientific(pr_train, T)
+# output_test <- no_scientific(pr_test, F)
+# output_test$x <- pred$x
+# output_test$y <- pred$y
+# output_test$z <- pred$y
+# write_csv(output_train, "train.csv", quote=F)
+# write_csv(output_test, "test.csv", quote=F)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

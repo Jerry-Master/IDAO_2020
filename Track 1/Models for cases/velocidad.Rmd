@@ -1,0 +1,90 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(car)
+```
+
+```{r}
+train <- read_csv("../../data/train.csv")
+test <- read_csv("../../data/test.csv")
+
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+train$epoch <- as.numeric(as.POSIXct(train$epoch))
+test$epoch <- test$epoch - min(train$epoch)
+train$epoch <- train$epoch - min(train$epoch)
+
+TT <- read_csv("../../data/periods.csv")
+```
+
+Spherical coordinates
+```{r}
+to_sph <- function(df) {
+  df$r <- sqrt(df$x^2 + df$y^2 + df$z^2)
+  df$phi <- atan(df$y/df$x)
+  df$theta <- acos(df$z/df$r)
+  
+  df$v <- sqrt(df$Vx^2 + df$Vy^2 + df$Vz^2)
+  df$Vphi <- atan(df$Vy/df$Vx)
+  df$Vtheta <- acos(df$Vz/df$v)
+  df
+}
+train37 <- to_sph(train37)
+```
+
+Plots
+```{r}
+plotea <- function(sat, coors) {
+  ddi <- filter(train, sat_id == sat)
+  for (c in coors) {
+    plot(ddi$epoch, unlist(ddi[,c+3]))
+  }
+}
+```
+
+Score
+```{r}
+score <- function(val_pred, val_real) {
+  smape <- mean(abs(val_pred - val_real) / (abs(val_pred)+abs(val_real)))
+  100 * (1 - smape)
+}
+```
+
+Modelo Newtoniano
+```{r}
+train37$r <- sqrt(train37$x^2 + train37$y^2 + train37$z^2)
+train37$v <- sqrt(train37$Vx^2 + train37$Vy^2 + train37$Vz^2)
+GM <- 3.986044418e14
+
+plot(GM/train37$r, train37$v^2)
+```
+```{r}
+train37$vv <- train37$v^2
+train37$rr <- GM*train37$r^-1
+mod1 <- lm(vv ~ rr, data = train37)
+summary(mod1)
+plot(GM/train37$r, train37$v^2)
+points(train37$rr, predict(mod1), col="blue")
+```
+```{r}
+plot(train37$epoch, train37$phi)
+points(train37$epoch, train37$Vphi, col="blue")
+mod2 <- lm(Vphi ~ phi, data=train37)
+summary(mod2)
+plot(train37$phi, train37$Vphi)
+points(train37$phi, predict(mod2), col="blue")
+```
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,143 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+sat <- read.csv("train.csv")
+head(sat)
+```
+
+```{r}
+serie <- sat[sat$sat_id==1,]
+head(serie)
+```
+
+```{r}
+serie$epoch <- as.numeric(as.POSIXct(serie$epoch))
+head(serie$epoch)
+```
+
+```{r}
+rm.list <- c()
+for (i in 2:length(serie$epoch)){
+  if (serie$epoch[i-1] == serie$epoch[i]){
+    rm.list <- c(rm.list, i)
+  }
+}
+```
+
+
+```{r}
+serie <- serie[-rm.list,]
+```
+
+```{r}
+plot(serie$x,type="l")
+```
+
+
+```{r}
+seriex <- ts(serie$x, freq=4)
+plot(seriex)
+```
+
+```{r}
+seriex.d24 <- diff(seriex, 4)
+plot(seriex.d24)
+abline(h=0, lty=2)
+```
+
+```{r}
+monthplot(seriex.d24)
+```
+
+```{r}
+seriex.d24.d24 <- diff(seriex.d24, 4)
+plot(seriex.d24.d24)
+abline(h=0, lty=2)
+```
+
+```{r}
+monthplot(seriex.d24.d24)
+```
+
+```{r}
+seriex.d24.d24.d24 <- diff(seriex.d24.d24,4)
+plot(seriex.d24.d24.d24)
+abline(h=0, lty=2)
+```
+
+```{r}
+monthplot(seriex.d24.d24.d24)
+```
+
+
+```{r}
+var(seriex)
+var(seriex.d24)
+var(seriex.d24.d24)
+var(seriex.d24.d24.d24)
+```
+
+```{r}
+seriex.d24.d24.d1 <- diff(seriex.d24.d24)
+plot(seriex.d24.d24.d1)
+abline(h=0, lty=2)
+```
+
+```{r}
+var(seriex.d24.d24)
+var(seriex.d24.d24.d1)
+var(diff(seriex.d24.d24.d1))
+```
+
+```{r}
+boxplot(seriex~floor(time(seriex)))
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(seriex.d24.d24, col=c(2,rep(1,3)), lag=100)
+pacf(seriex.d24.d24, col=c(rep(1,3),2), lag=100)
+```
+
+```{r}
+par(mfrow=c(1,2))
+acf(seriex.d24.d24, col=c(2,rep(1,23)), lag=100)
+pacf(seriex.d24.d24, col=c(rep(1,23),2), lag=100)
+```
+
+
+
+
+```{r}
+mod <- arima(seriex, order=c(2,0,0), seasonal=list(order=c(3,2,0), frequency=4))
+
+res <- resid(mod)
+```
+
+```{r}
+plot(res)
+qqnorm(res)
+qqline(res)
+hist(res, breaks=40, freq=F)
+tsdiag(mod,40)
+```
+
+
+```{r}
+pred <- predict(mod, n.ahead=12)
+
+pre <- pred$pred
+
+lo <- pre - 1.96 * pred$se
+up <- pre + 1.96 * pred$se
+
+ts.plot(seriex,lo,up,pre,lty=c(1,2,2,1),col=c(1,4,4,2),xlim=c(0,12), ylim=c(min(seriex)-1000, max(seriex)+100000), type="o") 
+abline(v=0:12,lty=3,col=4)
+```
+
+
+
+

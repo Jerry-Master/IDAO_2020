@@ -1,0 +1,269 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Librerias
+```{r}
+library(tidyverse)
+library(car)
+library(ridge)
+```
+
+Data
+```{r}
+train <- read_csv("../../data/train.csv")
+test <- read_csv("../../data/test.csv")
+
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+train$epoch <- as.numeric(as.POSIXct(train$epoch))
+test$epoch <- test$epoch - min(train$epoch)
+train$epoch <- train$epoch - min(train$epoch)
+
+TT <- read_csv("../../data/periods.csv")
+```
+
+
+
+Normal regression
+```{r}
+
+eval <- function(dat, dat_test, i){
+
+   ddi <- dat
+   testi <- dat_test
+   #testi <- rbind(select(testi, id, sat_id, epoch, x_sim, y_sim, z_sim, Vx_sim, Vy_sim, Vz_sim), filter(test, sat_id==i))
+   
+    t1 <- unlist(TT[i+1,1])
+    t2 <- unlist(TT[i+1,2])
+    t3 <- unlist(TT[i+1,3])
+    t4 <- unlist(TT[i+1,4])
+    t5 <- unlist(TT[i+1,5])
+    t6 <- unlist(TT[i+1,6])
+    
+    
+   lmX <- lm(x ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+   
+   lmY <- lm(y ~ epoch+sin(2*pi/t2*epoch)+cos(2*pi/t2*epoch)+sin(4*pi/t2*epoch)+cos(4*pi/t2*epoch)+sin(6*pi/t2*epoch)+cos(6*pi/t2*epoch)+sin(8*pi/t2*epoch)+cos(8*pi/t2*epoch)+sin(10*pi/t2*epoch)+cos(10*pi/t2*epoch)+epoch*sin(2*pi/t2*epoch)+epoch*cos(2*pi/t2*epoch)+epoch*sin(4*pi/t2*epoch)+epoch*cos(4*pi/t2*epoch)+epoch*sin(6*pi/t2*epoch)+epoch*cos(6*pi/t2*epoch)+epoch*sin(8*pi/t2*epoch)+epoch*cos(8*pi/t2*epoch)+epoch*sin(10*pi/t2*epoch)+epoch*cos(10*pi/t2*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+   
+   lmZ <- lm(z ~ epoch+sin(2*pi/t3*epoch)+cos(2*pi/t3*epoch)+sin(4*pi/t3*epoch)+cos(4*pi/t3*epoch)+sin(6*pi/t3*epoch)+cos(6*pi/t3*epoch)+sin(8*pi/t3*epoch)+cos(8*pi/t3*epoch)+sin(10*pi/t3*epoch)+cos(10*pi/t3*epoch)+epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+  
+   lmVx <- lm(Vx ~ epoch+sin(2*pi/t4*epoch)+cos(2*pi/t4*epoch)+sin(4*pi/t4*epoch)+cos(4*pi/t4*epoch)+sin(6*pi/t4*epoch)+cos(6*pi/t4*epoch)+sin(8*pi/t4*epoch)+cos(8*pi/t4*epoch)+sin(10*pi/t4*epoch)+cos(10*pi/t4*epoch)+epoch*sin(2*pi/t4*epoch)+epoch*cos(2*pi/t4*epoch)+epoch*sin(4*pi/t4*epoch)+epoch*cos(4*pi/t4*epoch)+epoch*sin(6*pi/t4*epoch)+epoch*cos(6*pi/t4*epoch)+epoch*sin(8*pi/t4*epoch)+epoch*cos(8*pi/t4*epoch)+epoch*sin(10*pi/t4*epoch)+epoch*cos(10*pi/t4*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+   
+   lmVy <- lm(Vy ~ epoch+sin(2*pi/t5*epoch)+cos(2*pi/t5*epoch)+sin(4*pi/t5*epoch)+cos(4*pi/t5*epoch)+sin(6*pi/t5*epoch)+cos(6*pi/t5*epoch)+sin(8*pi/t5*epoch)+cos(8*pi/t5*epoch)+sin(10*pi/t5*epoch)+cos(10*pi/t5*epoch)+epoch*sin(2*pi/t5*epoch)+epoch*cos(2*pi/t5*epoch)+epoch*sin(4*pi/t5*epoch)+epoch*cos(4*pi/t5*epoch)+epoch*sin(6*pi/t5*epoch)+epoch*cos(6*pi/t5*epoch)+epoch*sin(8*pi/t5*epoch)+epoch*cos(8*pi/t5*epoch)+epoch*sin(10*pi/t5*epoch)+epoch*cos(10*pi/t5*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+   
+   lmVz <- lm(Vz ~ epoch+sin(2*pi/t6*epoch)+cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch)+epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+   
+    
+   data.frame(id = testi$id, sat_id=testi$sat_id, epoch=testi$epoch, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+}
+```
+
+Mean square error
+Returns the mean error of the predictions.
+```{r}
+data_mse <- function(pred, real) {
+  data.frame(sat_id=pred$sat_id[1],
+              mse_x=mse(pred$x, real$x),
+              mse_y=mse(pred$y, real$y),
+              mse_z=mse(pred$z, real$z),
+            
+              mse_Vx=mse(pred$Vx, real$Vx),
+              mse_Vy=mse(pred$Vy, real$Vy),
+              mse_Vz=mse(pred$Vz, real$Vz))
+}
+```
+
+Mean
+Returns the mean for each variable
+```{r}
+data_mean <- function(data) {
+    data.frame(sat_id=data[1,1],
+              mean_x=mean(data[,2]),
+              mean_y=mean(data[,3]),
+              mean_z=mean(data[,4]),
+            
+              mean_Vx=mean(data[,5]),
+              mean_Vy=mean(data[,6]),
+              mean_Vz=mean(data[,7]),
+              
+              estimated_mean_x=mean(data[,9]),
+              estimated_mean_y=mean(data[,10]),
+              estimated_mean_z=mean(data[,11]),
+            
+              estimated_mean_Vx=mean(data[,12]),
+              estimated_mean_Vy=mean(data[,13]),
+              estimated_mean_Vz=mean(data[,14]))
+}
+```
+
+Ratio
+Returns the ratio of mse for estimated and real
+```{r}
+ratio <- function(data) {
+  data <- data_mean(data)
+  data.frame(sat_id=data$sat_id,
+              ratio_x=(data[,2]-data[,8])/data[,8],
+              ratio_y=(data[,3]-data[,9])/data[,9],
+              ratio_z=(data[,4]-data[,10])/data[,10],
+              
+              ratio_Vx=(data[,5]-data[,11])/data[,11],
+              ratio_Vy=(data[,6]-data[,12])/data[,12],
+              ratio_Vz=(data[,7]-data[,13])/data[,13])
+}
+```
+
+Cross-validation
+Returns the ratio of the validation MSE for the satellites in rango, with n-fold cross-validation and the estimated value it should have. For values near 1 there isn't neither overfitting nor underfitting. Values greater to 1 correspond to overfitting and smaller than 1 to underfitting.
+```{r}
+cross_validation <- function(rango, n){
+  for (i in rango) {
+    print(i)
+    sat_i <- filter(train, sat_id==i)
+    l <- length(sat_i$epoch)
+    p <- 28
+    corrector <- (l+p)/(l-p)
+    for (k in 1:n) {
+      if (k == 1) train_i <- sat_i[as.integer(l/n+1):l,]
+      else if (k == n) train_i <- sat_i[1:as.integer((n-1)*l/n),]
+      else train_i <- rbind(sat_i[1:as.integer((k-1)*l/n),], sat_i[as.integer(k*l/n+1):l,])
+      
+      test_i <- sat_i[as.integer((k-1)*l/n+1):as.integer(k*l/n),]
+      
+      if (k == 1) cum_mse <- data_mse(eval(train_i, test_i, i), test_i)
+      else cum_mse <- rbind(cum_mse, data_mse(eval(train_i, test_i, i), test_i))
+      
+      #if (k == 1) estimated_mse <- corrector * data_mse(eval(train_i, train_i, i), train_i)
+      #else estimated_mse <- rbind(estimated_mse, corrector * data_mse(eval(train_i, train_i, i), train_i)) 
+    }
+    estimated_mse <- corrector * data_mse(eval(sat_i, sat_i, i), sat_i)
+    
+    if (i == rango[1]) {
+      ans <- ratio(cbind(cum_mse, estimated_mse)) 
+    } else {
+      ans <- rbind(ans, ratio(cbind(cum_mse, estimated_mse)))
+    }
+  }
+  ans
+}
+```
+
+```{r}
+cv <- cross_validation(0:599, 10)
+```
+```{r}
+write.csv(cv, "cross_validation.csv", quote=F, row.names=F)
+```
+
+```{r}
+cv[1+c(37,253,372,473,514,523,587),]
+cv[2:37,]
+```
+
+```{r}
+
+mod <- function(v){
+  sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
+}
+
+vect_prod <- function(v1, v2){
+  c(v1[2]*v2[3]-v1[3]*v2[2], v1[3]*v2[1]-v1[1]*v2[3], v1[1]*v2[2]-v1[2]*v2[1])
+}
+
+eccentricity <- function(r, v) {
+  mu <- 3.986004418*1e14
+  mod( vect_prod(v, vect_prod(r, v))/mu - r/mod(r) )
+}
+
+mean_anomaly <- function(t, t0, period) {
+  2 * pi * (t - t0) / period
+}
+
+eccentric_anomaly <- function(e, M) {
+  E <- M
+  while(TRUE) {
+    dE <- (E - e * sin(E) - M)/(1 - e * cos(E));
+    E <- E - dE;
+    if(abs(dE) < 1e-6) {
+      break
+    }
+  }
+  E
+}
+
+
+eval2 <- function(dat, dat_test, i){
+
+   ddi <- dat
+   testi <- dat_test
+   #testi <- rbind(select(testi, id, sat_id, epoch, x_sim, y_sim, z_sim, Vx_sim, Vy_sim, Vz_sim), filter(test, sat_id==i))
+   
+    t1 <- unlist(TT[i+1,1])
+    t2 <- unlist(TT[i+1,2])
+    t3 <- unlist(TT[i+1,3])
+    t4 <- unlist(TT[i+1,4])
+    t5 <- unlist(TT[i+1,5])
+    t6 <- unlist(TT[i+1,6])
+  
+  save <- testi$epoch
+  E <- c()
+  e <- c()
+  for (j in 1:length(ddi$x)) {
+    r <- c(ddi$x[j], ddi$y[j], 0)
+    v <- c(ddi$Vx[j], ddi$Vy[j], 0)
+    t0 <- ddi$epoch[(j-(j%%24))]
+    t <- ddi$epoch[j]
+    period <- t1
+    e <- c(e, eccentricity(r, v))
+    E <- c(E, eccentric_anomaly(eccentricity(r, v), mean_anomaly(t, t0, period)))
+    
+  }
+  
+  ddi$E <- E
+  # e <- mean(e)
+  # E <- c()
+  # for (j in 1:length(testi$x)) {
+  #   t0 <- ddi$epoch[1]
+  #   t <- testi$epoch[j]
+  #   period <- t1
+  # 
+  #   E <- c(E, eccentric_anomaly(e, mean_anomaly(t, t0, period)))
+  # 
+  # }
+  # testi$E <- E
+    
+    
+   lmX <- lm(x ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), ddi)
+   
+   #lmY <- lm(y ~ epoch+sin(E), ddi)
+   
+   lmZ <- lm(z ~ epoch+sin(2*pi/t3*epoch)+cos(2*pi/t3*epoch)+sin(4*pi/t3*epoch)+cos(4*pi/t3*epoch)+sin(6*pi/t3*epoch)+cos(6*pi/t3*epoch)+sin(8*pi/t3*epoch)+cos(8*pi/t3*epoch)+sin(10*pi/t3*epoch)+cos(10*pi/t3*epoch)+epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch), ddi)
+  
+   lmVx <- lm(Vx ~ epoch+sin(2*pi/t4*epoch)+cos(2*pi/t4*epoch)+sin(4*pi/t4*epoch)+cos(4*pi/t4*epoch)+sin(6*pi/t4*epoch)+cos(6*pi/t4*epoch)+sin(8*pi/t4*epoch)+cos(8*pi/t4*epoch)+sin(10*pi/t4*epoch)+cos(10*pi/t4*epoch)+epoch*sin(2*pi/t4*epoch)+epoch*cos(2*pi/t4*epoch)+epoch*sin(4*pi/t4*epoch)+epoch*cos(4*pi/t4*epoch)+epoch*sin(6*pi/t4*epoch)+epoch*cos(6*pi/t4*epoch)+epoch*sin(8*pi/t4*epoch)+epoch*cos(8*pi/t4*epoch)+epoch*sin(10*pi/t4*epoch)+epoch*cos(10*pi/t4*epoch), ddi)
+   
+   lmVy <- lm(Vy ~ epoch+sin(2*pi/t5*epoch)+cos(2*pi/t5*epoch)+sin(4*pi/t5*epoch)+cos(4*pi/t5*epoch)+sin(6*pi/t5*epoch)+cos(6*pi/t5*epoch)+sin(8*pi/t5*epoch)+cos(8*pi/t5*epoch)+sin(10*pi/t5*epoch)+cos(10*pi/t5*epoch)+epoch*sin(2*pi/t5*epoch)+epoch*cos(2*pi/t5*epoch)+epoch*sin(4*pi/t5*epoch)+epoch*cos(4*pi/t5*epoch)+epoch*sin(6*pi/t5*epoch)+epoch*cos(6*pi/t5*epoch)+epoch*sin(8*pi/t5*epoch)+epoch*cos(8*pi/t5*epoch)+epoch*sin(10*pi/t5*epoch)+epoch*cos(10*pi/t5*epoch), ddi)
+   
+   lmVz <- lm(Vz ~ epoch+sin(2*pi/t6*epoch)+cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch)+epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch), ddi)
+   
+    
+   data.frame(id = testi$id, sat_id=testi$sat_id, epoch=save, x=predict(lmX, testi), y=testi$y_sim, z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+}
+```
+
+```{r}
+for (i in c(37, 253, 470, 372, 473, 514, 523, 587)){
+  if (i %in% unique(test$sat_id)){
+    print(i)
+    sat36 <- filter(train, sat_id==i)
+    sat36t <- filter(test, sat_id==i)
+    sat36t <- rbind(select(sat36, id, sat_id, epoch, x_sim, y_sim, z_sim, Vx_sim, Vy_sim, Vz_sim), sat36t)
+    
+    plot(sat36t$epoch, eval2(sat36, sat36t, i)$y, ylim=c(min(sat36$y), max(sat36$y)))
+    points(sat36$epoch, sat36$y, col="blue")
+  }
+}
+
+```
+
+
+

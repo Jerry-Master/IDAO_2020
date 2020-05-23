@@ -1,0 +1,260 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+
+Libraries
+```{r}
+library(readr)
+library(car)
+library(emmeans)
+library(tables)
+library(tidyverse)
+library(RcmdrMisc)
+library(dplyr)
+```
+
+Read data
+```{r}
+dd <- read_csv("train.csv")
+test <- read_csv("test.csv")
+
+test$epoch <- as.numeric(as.POSIXct(test$epoch))
+dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
+
+test$epoch <- test$epoch - min(dd$epoch)
+dd$epoch <- dd$epoch - min(dd$epoch)
+```
+
+
+Approximate periods of the sines (each variable with respect to time)
+```{r}
+TT <- matrix(1:3600, nrow=600)
+
+for (i in 0:599){
+   print(i)
+   ddi <- filter(dd, sat_id==i)
+   testi <- filter(test, sat_id==i)
+   tt <- (ddi$epoch[25]-ddi$epoch[1])
+  
+  
+   best_x <- 0
+   best_y <- 0
+   best_z <- 0
+   best_Vx <- 0
+   best_Vy <- 0
+   best_Vz <- 0
+   
+   for (k in seq(0.95, 1.05, 0.001)) {
+      t <- tt*k
+      lmX <- lm(x ~ epoch*sin(2*pi/t*epoch)+epoch*cos(2*pi/t*epoch)+epoch*sin(4*pi/t*epoch)+epoch*cos(4*pi/t*epoch)+epoch*sin(6*pi/t*epoch)+epoch*cos(6*pi/t*epoch)+epoch*sin(8*pi/t*epoch)+epoch*cos(8*pi/t*epoch)+epoch*sin(10*pi/t*epoch)+epoch*cos(10*pi/t*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+    
+      lmY <- lm(y ~ epoch*sin(2*pi/t*epoch)+epoch*cos(2*pi/t*epoch)+epoch*sin(4*pi/t*epoch)+epoch*cos(4*pi/t*epoch)+epoch*sin(6*pi/t*epoch)+epoch*cos(6*pi/t*epoch)+epoch*sin(8*pi/t*epoch)+epoch*cos(8*pi/t*epoch)+epoch*sin(10*pi/t*epoch)+epoch*cos(10*pi/t*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmZ <- lm(z ~ epoch*sin(2*pi/t*epoch)+epoch*cos(2*pi/t*epoch)+epoch*sin(4*pi/t*epoch)+epoch*cos(4*pi/t*epoch)+epoch*sin(6*pi/t*epoch)+epoch*cos(6*pi/t*epoch)+epoch*sin(8*pi/t*epoch)+epoch*cos(8*pi/t*epoch)+epoch*sin(10*pi/t*epoch)+epoch*cos(10*pi/t*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+
+      lmVx <- lm(Vx ~ epoch*sin(2*pi/t*epoch)+epoch*cos(2*pi/t*epoch)+epoch*sin(4*pi/t*epoch)+epoch*cos(4*pi/t*epoch)+epoch*sin(6*pi/t*epoch)+epoch*cos(6*pi/t*epoch)+epoch*sin(8*pi/t*epoch)+epoch*cos(8*pi/t*epoch)+epoch*sin(10*pi/t*epoch)+epoch*cos(10*pi/t*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmVy <- lm(Vy ~ epoch*sin(2*pi/t*epoch)+epoch*cos(2*pi/t*epoch)+epoch*sin(4*pi/t*epoch)+epoch*cos(4*pi/t*epoch)+epoch*sin(6*pi/t*epoch)+epoch*cos(6*pi/t*epoch)+epoch*sin(8*pi/t*epoch)+epoch*cos(8*pi/t*epoch)+epoch*sin(10*pi/t*epoch)+epoch*cos(10*pi/t*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmVz <- lm(Vz ~ epoch*sin(2*pi/t*epoch)+epoch*cos(2*pi/t*epoch)+epoch*sin(4*pi/t*epoch)+epoch*cos(4*pi/t*epoch)+epoch*sin(6*pi/t*epoch)+epoch*cos(6*pi/t*epoch)+epoch*sin(8*pi/t*epoch)+epoch*cos(8*pi/t*epoch)+epoch*sin(10*pi/t*epoch)+epoch*cos(10*pi/t*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+     
+      if (summary(lmX)$adj.r.squared > best_x) {
+        best_x <- summary(lmX)$adj.r.squared
+        TT[i+1, 1] <- t
+      }
+   
+      if (summary(lmY)$adj.r.squared > best_y) {
+        best_y <- summary(lmY)$adj.r.squared
+        TT[i+1, 2] <- t
+      }
+   
+      if (summary(lmZ)$adj.r.squared > best_z) {
+        best_z <- summary(lmZ)$adj.r.squared
+        TT[i+1, 3] <- t
+      }
+   
+      if (summary(lmVx)$adj.r.squared > best_Vx) {
+        best_Vx <- summary(lmVx)$adj.r.squared
+        TT[i+1, 4] <- t
+      }
+   
+      if (summary(lmVy)$adj.r.squared > best_Vy) {
+        best_Vy <- summary(lmVy)$adj.r.squared
+        TT[i+1, 5] <- t
+      }
+   
+      if (summary(lmVz)$adj.r.squared > best_Vz) {
+        best_Vz <- summary(lmVz)$adj.r.squared
+        TT[i+1, 6] <- t
+      }
+  }
+}
+
+write.csv(TT, "periods3.csv", quote = F, row.names = F)
+```
+
+
+Make better approximations for the periods
+```{r}
+TT <- read.csv("periods3.csv")
+
+for (i in 0:599){
+   print(i)
+   ddi <- filter(dd, sat_id==i)
+   testi <- filter(test, sat_id==i)
+   
+   tt1 <- unlist(TT[i+1,1])
+   tt2 <- unlist(TT[i+1,2])
+   tt3 <- unlist(TT[i+1,3])
+   tt4 <- unlist(TT[i+1,4])
+   tt5 <- unlist(TT[i+1,5])
+   tt6 <- unlist(TT[i+1,6])
+  
+  
+   best_x <- 0
+   best_y <- 0
+   best_z <- 0
+   best_Vx <- 0
+   best_Vy <- 0
+   best_Vz <- 0
+   
+   for (k in seq(0.995, 1.005, 0.0001)) {
+      t1 <- tt1*k
+      t2 <- tt2*k
+      t3 <- tt3*k
+      t4 <- tt4*k
+      t5 <- tt5*k
+      t6 <- tt6*k
+      
+      lmX <- lm(x ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+    
+      lmY <- lm(y ~ epoch*sin(2*pi/t2*epoch)+epoch*cos(2*pi/t2*epoch)+epoch*sin(4*pi/t2*epoch)+epoch*cos(4*pi/t2*epoch)+epoch*sin(6*pi/t2*epoch)+epoch*cos(6*pi/t2*epoch)+epoch*sin(8*pi/t2*epoch)+epoch*cos(8*pi/t2*epoch)+epoch*sin(10*pi/t2*epoch)+epoch*cos(10*pi/t2*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmZ <- lm(z ~ epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+
+      lmVx <- lm(Vx ~ epoch*sin(2*pi/t4*epoch)+epoch*cos(2*pi/t4*epoch)+epoch*sin(4*pi/t4*epoch)+epoch*cos(4*pi/t4*epoch)+epoch*sin(6*pi/t4*epoch)+epoch*cos(6*pi/t4*epoch)+epoch*sin(8*pi/t4*epoch)+epoch*cos(8*pi/t4*epoch)+epoch*sin(10*pi/t4*epoch)+epoch*cos(10*pi/t4*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmVy <- lm(Vy ~ epoch*sin(2*pi/t5*epoch)+epoch*cos(2*pi/t5*epoch)+epoch*sin(4*pi/t5*epoch)+epoch*cos(4*pi/t5*epoch)+epoch*sin(6*pi/t5*epoch)+epoch*cos(6*pi/t5*epoch)+epoch*sin(8*pi/t5*epoch)+epoch*cos(8*pi/t5*epoch)+epoch*sin(10*pi/t5*epoch)+epoch*cos(10*pi/t5*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmVz <- lm(Vz ~ epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+     
+      if (summary(lmX)$adj.r.squared > best_x) {
+        best_x <- summary(lmX)$adj.r.squared
+        TT[i+1, 1] <- t1
+      }
+   
+      if (summary(lmY)$adj.r.squared > best_y) {
+        best_y <- summary(lmY)$adj.r.squared
+        TT[i+1, 2] <- t2
+      }
+   
+      if (summary(lmZ)$adj.r.squared > best_z) {
+        best_z <- summary(lmZ)$adj.r.squared
+        TT[i+1, 3] <- t3
+      }
+   
+      if (summary(lmVx)$adj.r.squared > best_Vx) {
+        best_Vx <- summary(lmVx)$adj.r.squared
+        TT[i+1, 4] <- t4
+      }
+   
+      if (summary(lmVy)$adj.r.squared > best_Vy) {
+        best_Vy <- summary(lmVy)$adj.r.squared
+        TT[i+1, 5] <- t5
+      }
+   
+      if (summary(lmVz)$adj.r.squared > best_Vz) {
+        best_Vz <- summary(lmVz)$adj.r.squared
+        TT[i+1, 6] <- t6
+      }
+  }
+}
+
+write.csv(TT, "periods2.csv", quote = F, row.names = F)
+```
+
+
+
+
+Make even better approximations for the periods, (last improvement and save them)
+```{r}
+TT <- read.csv("periods2.csv")
+
+for (i in 0:599){
+   print(i)
+   ddi <- filter(dd, sat_id==i)
+   testi <- filter(test, sat_id==i)
+   
+   tt1 <- unlist(TT[i+1,1])
+   tt2 <- unlist(TT[i+1,2])
+   tt3 <- unlist(TT[i+1,3])
+   tt4 <- unlist(TT[i+1,4])
+   tt5 <- unlist(TT[i+1,5])
+   tt6 <- unlist(TT[i+1,6])
+  
+  
+   best_x <- 0
+   best_y <- 0
+   best_z <- 0
+   best_Vx <- 0
+   best_Vy <- 0
+   best_Vz <- 0
+   
+   for (k in seq(0.9995, 1.0005, 0.00001)) {
+      t1 <- tt1*k
+      t2 <- tt2*k
+      t3 <- tt3*k
+      t4 <- tt4*k
+      t5 <- tt5*k
+      t6 <- tt6*k
+      
+      lmX <- lm(x ~ epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+    
+      lmY <- lm(y ~ epoch*sin(2*pi/t2*epoch)+epoch*cos(2*pi/t2*epoch)+epoch*sin(4*pi/t2*epoch)+epoch*cos(4*pi/t2*epoch)+epoch*sin(6*pi/t2*epoch)+epoch*cos(6*pi/t2*epoch)+epoch*sin(8*pi/t2*epoch)+epoch*cos(8*pi/t2*epoch)+epoch*sin(10*pi/t2*epoch)+epoch*cos(10*pi/t2*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmZ <- lm(z ~ epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+
+      lmVx <- lm(Vx ~ epoch*sin(2*pi/t4*epoch)+epoch*cos(2*pi/t4*epoch)+epoch*sin(4*pi/t4*epoch)+epoch*cos(4*pi/t4*epoch)+epoch*sin(6*pi/t4*epoch)+epoch*cos(6*pi/t4*epoch)+epoch*sin(8*pi/t4*epoch)+epoch*cos(8*pi/t4*epoch)+epoch*sin(10*pi/t4*epoch)+epoch*cos(10*pi/t4*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmVy <- lm(Vy ~ epoch*sin(2*pi/t5*epoch)+epoch*cos(2*pi/t5*epoch)+epoch*sin(4*pi/t5*epoch)+epoch*cos(4*pi/t5*epoch)+epoch*sin(6*pi/t5*epoch)+epoch*cos(6*pi/t5*epoch)+epoch*sin(8*pi/t5*epoch)+epoch*cos(8*pi/t5*epoch)+epoch*sin(10*pi/t5*epoch)+epoch*cos(10*pi/t5*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+ 
+      lmVz <- lm(Vz ~ epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
+     
+      if (summary(lmX)$adj.r.squared > best_x) {
+        best_x <- summary(lmX)$adj.r.squared
+        TT[i+1, 1] <- t1
+      }
+   
+      if (summary(lmY)$adj.r.squared > best_y) {
+        best_y <- summary(lmY)$adj.r.squared
+        TT[i+1, 2] <- t2
+      }
+   
+      if (summary(lmZ)$adj.r.squared > best_z) {
+        best_z <- summary(lmZ)$adj.r.squared
+        TT[i+1, 3] <- t3
+      }
+   
+      if (summary(lmVx)$adj.r.squared > best_Vx) {
+        best_Vx <- summary(lmVx)$adj.r.squared
+        TT[i+1, 4] <- t4
+      }
+   
+      if (summary(lmVy)$adj.r.squared > best_Vy) {
+        best_Vy <- summary(lmVy)$adj.r.squared
+        TT[i+1, 5] <- t5
+      }
+   
+      if (summary(lmVz)$adj.r.squared > best_Vz) {
+        best_Vz <- summary(lmVz)$adj.r.squared
+        TT[i+1, 6] <- t6
+      }
+  }
+}
+
+write.csv(TT, "periods.csv", quote = F, row.names = F)
+```
