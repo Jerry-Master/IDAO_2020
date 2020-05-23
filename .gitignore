@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 *.csv
 *.RData
 *.zip
 
+=======
+IDAO*
+*.csv
+*.zip
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9

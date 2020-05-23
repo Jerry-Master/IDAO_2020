@@ -159,6 +159,7 @@ write.csv(cv, "cross_validation.csv", quote=F, row.names=F)
 cv[1+c(37,253,372,473,514,523,587),]
 cv[2:37,]
 ```
+<<<<<<< HEAD
 
 ```{r}
 
@@ -170,6 +171,9 @@ vect_prod <- function(v1, v2){
   c(v1[2]*v2[3]-v1[3]*v2[2], v1[3]*v2[1]-v1[1]*v2[3], v1[1]*v2[2]-v1[2]*v2[1])
 }
 
+=======
+```{r}
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 eccentricity <- function(r, v) {
   mu <- 3.986004418*1e14
   mod( vect_prod(v, vect_prod(r, v))/mu - r/mod(r) )
@@ -207,6 +211,7 @@ eval2 <- function(dat, dat_test, i){
   
   save <- testi$epoch
   E <- c()
+<<<<<<< HEAD
   e <- c()
   for (j in 1:length(ddi$x)) {
     r <- c(ddi$x[j], ddi$y[j], 0)
@@ -231,11 +236,28 @@ eval2 <- function(dat, dat_test, i){
   # 
   # }
   # testi$E <- E
+=======
+  for (i in 1:length(testi$epoch)) {
+    r <- c(testi$x[i], testi$y[i], 0)
+    v <- c(testi$Vx[i], testi$Vy[i], 0)
+    t0 <- testi$epoch[24]+1500
+    t <- testi$epoch[i]
+    period <- tx
+    
+    E <- c(E, eccentric_anomaly(eccentricity(r, v), mean_anomaly(t, t0, period)))
+    
+  }
+  testi$epoch <- eccentric_anomaly(eccentricity())
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
     
     
    lmX <- lm(x ~ epoch+sin(2*pi/t1*epoch)+cos(2*pi/t1*epoch)+sin(4*pi/t1*epoch)+cos(4*pi/t1*epoch)+sin(6*pi/t1*epoch)+cos(6*pi/t1*epoch)+sin(8*pi/t1*epoch)+cos(8*pi/t1*epoch)+sin(10*pi/t1*epoch)+cos(10*pi/t1*epoch)+epoch*sin(2*pi/t1*epoch)+epoch*cos(2*pi/t1*epoch)+epoch*sin(4*pi/t1*epoch)+epoch*cos(4*pi/t1*epoch)+epoch*sin(6*pi/t1*epoch)+epoch*cos(6*pi/t1*epoch)+epoch*sin(8*pi/t1*epoch)+epoch*cos(8*pi/t1*epoch)+epoch*sin(10*pi/t1*epoch)+epoch*cos(10*pi/t1*epoch), ddi)
    
+<<<<<<< HEAD
    #lmY <- lm(y ~ epoch+sin(E), ddi)
+=======
+   lmY <- lm(y ~ epoch+sin(2*pi/t2*epoch)+cos(2*pi/t2*epoch)+sin(4*pi/t2*epoch)+cos(4*pi/t2*epoch)+sin(6*pi/t2*epoch)+cos(6*pi/t2*epoch)+sin(8*pi/t2*epoch)+cos(8*pi/t2*epoch)+sin(10*pi/t2*epoch)+cos(10*pi/t2*epoch), ddi)
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
    
    lmZ <- lm(z ~ epoch+sin(2*pi/t3*epoch)+cos(2*pi/t3*epoch)+sin(4*pi/t3*epoch)+cos(4*pi/t3*epoch)+sin(6*pi/t3*epoch)+cos(6*pi/t3*epoch)+sin(8*pi/t3*epoch)+cos(8*pi/t3*epoch)+sin(10*pi/t3*epoch)+cos(10*pi/t3*epoch)+epoch*sin(2*pi/t3*epoch)+epoch*cos(2*pi/t3*epoch)+epoch*sin(4*pi/t3*epoch)+epoch*cos(4*pi/t3*epoch)+epoch*sin(6*pi/t3*epoch)+epoch*cos(6*pi/t3*epoch)+epoch*sin(8*pi/t3*epoch)+epoch*cos(8*pi/t3*epoch)+epoch*sin(10*pi/t3*epoch)+epoch*cos(10*pi/t3*epoch), ddi)
   
@@ -246,7 +268,11 @@ eval2 <- function(dat, dat_test, i){
    lmVz <- lm(Vz ~ epoch+sin(2*pi/t6*epoch)+cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch)+epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch), ddi)
    
     
+<<<<<<< HEAD
    data.frame(id = testi$id, sat_id=testi$sat_id, epoch=save, x=predict(lmX, testi), y=testi$y_sim, z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+=======
+   data.frame(id = testi$id, sat_id=testi$sat_id, epoch=testi$epoch, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 }
 ```
 

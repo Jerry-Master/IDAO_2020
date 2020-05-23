@@ -6,6 +6,10 @@
 #include <chrono>
 #include <cmath>
 #include <time.h>
+<<<<<<< HEAD
+=======
+#include <cassert>
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 
 using namespace std;
 typedef vector <double> vd;
@@ -27,7 +31,12 @@ int num_coef(int arm, int num_model){
     if (num_model == 2) return 2+arm*4;
     if (num_model == 3) return max(10+arm*2, arm*4)+6;
     if (num_model == 4) return 8+arm*2;
+<<<<<<< HEAD
     return 2+arm*2;
+=======
+    if (num_model == 5) return 2+arm*2;
+    assert(false);
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 }
 
 void init(){
@@ -45,7 +54,11 @@ void init(){
     for (int i = 0; i < 600; ++i){
         getline(fin3, info, ',');
         sat_id = stoi(info);
+<<<<<<< HEAD
 
+=======
+        assert(sat_id == i);
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
         for (int j = 0; j < 6; ++j){
             fin2 >> T[i][j];
 
@@ -61,11 +74,19 @@ void init(){
             } else {
                 num_coefs = 7;
             }
+<<<<<<< HEAD
     
             for (int k = 0; k < num_coefs; ++k){
                 if (k > 0) {
                     fin >> c;
             
+=======
+            assert(num_coefs >= 7 and num_coefs <= N);
+            for (int k = 0; k < num_coefs; ++k){
+                if (k > 0) {
+                    fin >> c;
+                    assert(c==',');
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
                 }
                 fin >> M[i][j*N + k];
             }
@@ -182,7 +203,13 @@ int armonics(int n) {
         (n >= 113 and n <= 117) or (n >= 153 and n <= 157)) return 8;
     if ((n >= 37 and n <= 41) or (n >= 78 and n <= 82) or 
         (n >= 118 and n <= 122) or (n >= 158 and n <= 162)) return 9;
+<<<<<<< HEAD
     return 10;
+=======
+    if ((n >= 42 and n <= 46) or (n >= 83 and n <= 87) or 
+        (n >= 123 and n <= 127) or (n >= 163 and n <= 167)) return 10;
+    assert(false);    
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 }
 
 int type (int n) {

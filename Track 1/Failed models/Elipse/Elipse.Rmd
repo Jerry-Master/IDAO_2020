@@ -15,7 +15,11 @@ library(dplyr)
 
 Dades
 ```{r}
+<<<<<<< HEAD
 setwd("../../../data")
+=======
+setwd("../../data")
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 train <- read_csv("train.csv")
 
 test <- read_csv("test.csv") 
@@ -32,7 +36,11 @@ head(test)
 
 Las pruebas se haran sobre el 249
 ```{r}
+<<<<<<< HEAD
 ids <- 37
+=======
+ids <- 0
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 pr_train <- filter(train, sat_id == ids)
 pr_test <- filter(test, sat_id == ids)
 ```
@@ -48,7 +56,11 @@ plot(pr_train$x[a:b], pr_train$y[a:b], type="l", col="blue")
 Estimar la elipse
 - Periodo
 ```{r}
+<<<<<<< HEAD
 TT <- read_csv("../../../data/periods.csv")
+=======
+TT <- read_csv("../../data/periods.csv")
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 tx <- unlist(TT[ids+1,1])
 ty <- unlist(TT[ids+1,2])
 ```
@@ -262,14 +274,22 @@ elipse <- function(dat, phi=pi/2) {
 ```{r}
 k <- 0
 a <- 1 + k*24
+<<<<<<< HEAD
 b <- 24 + (k+30)*24
+=======
+b <- 24 + (k)*24
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 el1 <- pr_train[a:b,]
 
 E <- c()
 for (i in 1:length(el1$x)) {
   r <- c(el1$x[i], el1$y[i], 0)
   v <- c(el1$Vx[i], el1$Vy[i], 0)
+<<<<<<< HEAD
   t0 <- el1$epoch[as.integer(i/24)*24+(i%%24!=0)]+1500
+=======
+  t0 <- el1$epoch[24]+1500
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
   t <- el1$epoch[i]
   period <- tx
   
@@ -288,6 +308,7 @@ lines(pred$x, predict(lm(y~x, data=pred)))
 
 Pasar a csv para visualizar
 ```{r}
+<<<<<<< HEAD
 # no_scientific <- function(ans, sim=F) {
 #   ans$id <- format(ans$id, scientific = F)
 #   ans$x <- format(ans$x, scientific = F)
@@ -315,6 +336,35 @@ Pasar a csv para visualizar
 # output_test$z <- pred$y
 # write_csv(output_train, "train.csv", quote=F)
 # write_csv(output_test, "test.csv", quote=F)
+=======
+no_scientific <- function(ans, sim=F) {
+  ans$id <- format(ans$id, scientific = F)
+  ans$x <- format(ans$x, scientific = F)
+  ans$y <- format(ans$y, scientific = F)
+  ans$z <- format(ans$z, scientific = F)
+  ans$Vx <- format(ans$Vx, scientific = F)
+  ans$Vy <- format(ans$Vy, scientific = F)
+  ans$Vz <- format(ans$Vz, scientific = F)
+  
+  if (sim) {
+    ans$x_sim <- format(ans$x_sim, scientific = F)
+    ans$y_sim <- format(ans$y_sim, scientific = F)
+    ans$z_sim <- format(ans$z_sim, scientific = F)
+    ans$Vx_sim <- format(ans$Vx_sim, scientific = F)
+    ans$Vy_sim <- format(ans$Vy_sim, scientific = F)
+    ans$Vz_sim <- format(ans$Vz_sim, scientific = F)
+  }
+  ans
+}
+
+output_train <- no_scientific(pr_train, T)
+output_test <- no_scientific(pr_test, F)
+output_test$x <- pred$x
+output_test$y <- pred$y
+output_test$z <- pred$y
+write_csv(output_train, "train.csv", quote=F)
+write_csv(output_test, "test.csv", quote=F)
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 ```
 
 

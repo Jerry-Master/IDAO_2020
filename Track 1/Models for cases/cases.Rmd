@@ -18,7 +18,11 @@ Dades
 ```{r}
 dd <- read_csv("../../data/train.csv")
 
+<<<<<<< HEAD
 test <- read_csv("../../data/train.csv") # Canviar a test si es vol generar la submission (també s'ha de canviar el if del bucle)
+=======
+test <- read_csv("../../data/test.csv") # Canviar a test si es vol generar la submission (també s'ha de canviar el if del bucle)
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 
 test$epoch <- as.numeric(as.POSIXct(test$epoch))
 dd$epoch <- as.numeric(as.POSIXct(dd$epoch))
@@ -37,7 +41,11 @@ file2 <- read.table("Modeltime.txt")
 file3 <- read.table("Modelepoch*pos.txt")
 file4 <- read.table("Modelbasemeh.txt")
 file5 <- read.table("Modelepoch+time.txt")
+<<<<<<< HEAD
 file6 <- read.table("bad.txt")
+=======
+file6 <- read.table("BADSAT.txt")
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 
 ```
 
@@ -74,9 +82,15 @@ for (i in file1$V1){
  
   
  if (i == file1$V1[1]) {
+<<<<<<< HEAD
   ans <- data.frame(id = testi$id, sat_id=testi$sat_id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
  } else{
   ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+=======
+  ans <- data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi))
+ } else{
+  ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
  }
 }
 ```
@@ -110,7 +124,11 @@ for (i in file2$V1){
  lmVz <- lm(Vz ~ epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch), ddi)
  
   
+<<<<<<< HEAD
  ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+=======
+ ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
  
 }
 ```
@@ -144,7 +162,11 @@ for (i in file3$V1){
  lmVz <- lm(Vz ~ epoch+epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch)+epoch*x_sim+epoch*y_sim+epoch*z_sim+epoch*Vx_sim+epoch*Vy_sim+epoch*Vz_sim, ddi)
  
   
+<<<<<<< HEAD
  ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+=======
+ ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
  
 }
 ```
@@ -178,7 +200,11 @@ for (i in file4$V1){
  lmVz <- lm(Vz ~ epoch*sin(2*pi/t6*epoch)+epoch*cos(2*pi/t6*epoch)+epoch*sin(4*pi/t6*epoch)+epoch*cos(4*pi/t6*epoch)+epoch*sin(6*pi/t6*epoch)+epoch*cos(6*pi/t6*epoch)+epoch*sin(8*pi/t6*epoch)+epoch*cos(8*pi/t6*epoch)+epoch*sin(10*pi/t6*epoch)+epoch*cos(10*pi/t6*epoch)+x_sim+y_sim+z_sim+Vx_sim+Vy_sim+Vz_sim, ddi)
  
   
+<<<<<<< HEAD
  ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+=======
+ ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 }
 
 ```
@@ -213,7 +239,11 @@ for (i in file5$V1){
  lmVz <- lm(Vz ~ epoch+sin(2*pi/t6*epoch)+cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch), ddi)
  
   
+<<<<<<< HEAD
  ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+=======
+ ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
 }
 ```
 
@@ -221,7 +251,10 @@ for (i in file5$V1){
 Models i prediccions 6
 ```{r}
 for (i in file6$V1){
+<<<<<<< HEAD
   i <- as.integer(i)
+=======
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
   print(i)
  ddi <- filter(dd, sat_id==i)
  testi <- filter(test, sat_id==i)
@@ -246,9 +279,14 @@ for (i in file6$V1){
  
  lmVz <- lm(Vz ~ epoch+sin(2*pi/t6*epoch)+cos(2*pi/t6*epoch)+sin(4*pi/t6*epoch)+cos(4*pi/t6*epoch)+sin(6*pi/t6*epoch)+cos(6*pi/t6*epoch)+sin(8*pi/t6*epoch)+cos(8*pi/t6*epoch)+sin(10*pi/t6*epoch)+cos(10*pi/t6*epoch), ddi)
  
+<<<<<<< HEAD
   # plot(testi$epoch, predict(lmX, testi))
   # points(ddi$epoch, ddi$x, col="blue")
  ans <- rbind(ans, data.frame(id = testi$id, sat_id=testi$sat_id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+=======
+  
+ ans <- rbind(ans, data.frame(id = testi$id, x=predict(lmX, testi), y=predict(lmY, testi), z=predict(lmZ, testi), Vx=predict(lmVx, testi), Vy=predict(lmVy, testi), Vz=predict(lmVz, testi)))
+>>>>>>> 365b97fe678e0210b1e027879cb364c1cfd412e9
  
 }
 ```
